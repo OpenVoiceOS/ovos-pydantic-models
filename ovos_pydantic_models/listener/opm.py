@@ -6,34 +6,48 @@ from ovos_pydantic_models.message import OpenVoiceOSMessage, MessageContext
 from ovos_pydantic_models.session import Session
 
 
-# --- Listener Service Message Models ---
+# --- Listener Service OPM Message Models ---
 
 
 class OvosLanguagesSttMessage(OpenVoiceOSMessage):
-    """Message for `ovos.languages.stt` (request for supported STT languages)."""
+    """Query which languages the active STT plugin supports.
+
+    Emitted by GUI settings panels, language-switcher skills, or anything
+    that needs to present a language selector. `ovos-dinkum-listener` replies
+    with `ovos.languages.stt.response` containing BCP-47 language codes.
+    """
     message_type: str = "ovos.languages.stt"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for language request.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class OvosLanguagesSttReplyData(BaseModel):
-    """Data for `ovos.languages.stt` response."""
+    """STT language support list returned by the listener."""
     langs: List[str] = Field(..., description="List of supported STT languages (e.g., 'en-us', 'es-es').")
 
 
 class OvosLanguagesSttResponseMessage(OpenVoiceOSMessage):
-    """Response message for `ovos.languages.stt`."""
+    """Return the languages supported by the active STT plugin.
+
+    Emitted by `ovos-dinkum-listener` in response to `ovos.languages.stt`.
+    The list reflects only languages the currently loaded STT plugin recognizes.
+    """
     message_type: str = "ovos.languages.stt.response"
     data: OvosLanguagesSttReplyData
 
 
 class OpmSttQueryMessage(OpenVoiceOSMessage):
-    """Message for `opm.stt.query` (request for STT plugin info)."""
+    """Query the Plugin Manager for all installed STT plugins and their capabilities.
+
+    Emitted by settings GUIs and configuration tools that need to present
+    a list of available STT engines to the user. `ovos-dinkum-listener`
+    (via OPM) replies with `opm.stt.query.response`.
+    """
     message_type: str = "opm.stt.query"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for query.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class OpmSttQueryReplyData(BaseModel):
-    """Data for `opm.stt.query` response."""
+    """STT plugin inventory returned by the Plugin Manager."""
     plugins: Dict[str, List[str]] = Field(
         ..., description="Dictionary mapping language to list of supported STT plugin names."
     )
@@ -47,19 +61,29 @@ class OpmSttQueryReplyData(BaseModel):
 
 
 class OpmSttQueryResponseMessage(OpenVoiceOSMessage):
-    """Response message for `opm.stt.query`."""
+    """Return the full STT plugin inventory from the Plugin Manager.
+
+    Emitted by `ovos-dinkum-listener` in response to `opm.stt.query`. Includes
+    all installed STT plugins, language support, config schemas, and UI option
+    lists for settings panels.
+    """
     message_type: str = "opm.stt.query.response"
     data: OpmSttQueryReplyData
 
 
 class OpmWwQueryMessage(OpenVoiceOSMessage):
-    """Message for `opm.ww.query` (request for Wake Word plugin info)."""
+    """Query the Plugin Manager for all installed Wake Word plugins.
+
+    Emitted by settings GUIs or configuration tools. `ovos-dinkum-listener`
+    replies with `opm.ww.query.response` listing all installed wake word
+    engines and their language support.
+    """
     message_type: str = "opm.ww.query"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for query.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class OpmWwQueryReplyData(BaseModel):
-    """Data for `opm.ww.query` response."""
+    """Wake Word plugin inventory returned by the Plugin Manager."""
     plugins: Dict[str, List[str]] = Field(
         ..., description="Dictionary mapping language to list of supported Wake Word plugin names."
     )
@@ -73,19 +97,28 @@ class OpmWwQueryReplyData(BaseModel):
 
 
 class OpmWwQueryResponseMessage(OpenVoiceOSMessage):
-    """Response message for `opm.ww.query`."""
+    """Return the full Wake Word plugin inventory from the Plugin Manager.
+
+    Emitted by `ovos-dinkum-listener` in response to `opm.ww.query`. Includes
+    all installed wake word engines, language support, and configuration schemas.
+    """
     message_type: str = "opm.ww.query.response"
     data: OpmWwQueryReplyData
 
 
 class OpmVadQueryMessage(OpenVoiceOSMessage):
-    """Message for `opm.vad.query` (request for VAD plugin info)."""
+    """Query the Plugin Manager for all installed Voice Activity Detection plugins.
+
+    Emitted by settings GUIs or configuration tools. `ovos-dinkum-listener`
+    replies with `opm.vad.query.response` listing installed VAD engines.
+    VAD plugins determine when the user starts and stops speaking.
+    """
     message_type: str = "opm.vad.query"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for query.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class OpmVadQueryReplyData(BaseModel):
-    """Data for `opm.vad.query` response."""
+    """VAD plugin inventory returned by the Plugin Manager."""
     plugins: Dict[str, List[str]] = Field(
         ..., description="Dictionary mapping language to list of supported VAD plugin names."
     )
@@ -99,28 +132,10 @@ class OpmVadQueryReplyData(BaseModel):
 
 
 class OpmVadQueryResponseMessage(OpenVoiceOSMessage):
-    """Response message for `opm.vad.query`."""
+    """Return the full VAD plugin inventory from the Plugin Manager.
+
+    Emitted by `ovos-dinkum-listener` in response to `opm.vad.query`. Includes
+    all installed VAD plugins, language support, and configuration schemas.
+    """
     message_type: str = "opm.vad.query.response"
     data: OpmVadQueryReplyData
-
-
-# --- Example Usage ---
-if __name__ == "__main__":
-    print("--- Demonstrating Listener Service Message Models ---")
-
-    # Create a dummy session and context for demonstration
-    dummy_session = Session(session_id="test-listener-session-789", lang="en-us")
-    dummy_context = MessageContext(source="ovos_listener_service", session=dummy_session)
-
-    # Example: OPM STT Query and Response
-    opm_stt_query = OpmSttQueryMessage(context=dummy_context)
-    print(f"\nOPM STT Query:\n{opm_stt_query.model_dump_json(indent=2)}")
-
-    opm_stt_reply_data = OpmSttQueryReplyData(
-        plugins={"en-us": ["stt-mozilla", "stt-google"], "es-es": ["stt-google"]},
-        langs=["en-us", "es-es"],
-        configs={"stt-mozilla": {"model": "default"}, "stt-google": {"api_key": "..."}},
-        options={"en-us": [{"engine": "stt-mozilla", "lang": "en-us", "display_name": "Mozilla STT"}]}
-    )
-    opm_stt_response = OpmSttQueryResponseMessage(data=opm_stt_reply_data, context=dummy_context)
-    print(f"\nOPM STT Query Response:\n{opm_stt_response.model_dump_json(indent=2)}")

@@ -11,293 +11,344 @@ from ovos_pydantic_models.session import Session
 
 
 class ListeningState(str, Enum):
-    """
-    Represents the current state of the listener's voice loop.
-    """
-    SLEEPING = "sleeping"
-    WAITING_FOR_WAKEWORD = "waiting_for_wakeword"
-    CONTINUOUS = "continuous"
-    RECORDING = "recording"
-    MUTED = "muted"
-    DISABLED = "disabled"
+    """Lifecycle state of the voice-activity / wake-word loop in `ovos-dinkum-listener`."""
+    SLEEPING = "sleeping"             # Wake-word detection paused (sleep mode)
+    WAITING_FOR_WAKEWORD = "waiting_for_wakeword"  # Idle; listening for wake word
+    CONTINUOUS = "continuous"         # Always-on STT, no wake word required
+    RECORDING = "recording"           # Actively recording user speech
+    MUTED = "muted"                   # Microphone hardware-muted
+    DISABLED = "disabled"             # Listener service disabled entirely
 
 
 class RecognizerLoopB64TranscribeData(BaseModel):
-    """Data for `recognizer_loop:b64_transcribe` message."""
-    audio_b64: str = Field(..., description="Base64 encoded audio data to transcribe.")
-    lang: Optional[str] = Field(None, description="Language of the audio for transcription.")
-    context: Optional[MessageContext] = Field(None, description="Original message context.")
+    """Request payload for on-demand STT transcription of a base64 audio clip."""
+    audio_b64: str = Field(..., description="Base64-encoded audio bytes to transcribe (WAV or raw PCM).")
+    lang: Optional[str] = Field(None, description="BCP-47 language code for the audio, e.g. 'en-us'. Falls back to session/config default.")
+    context: Optional[MessageContext] = Field(None, description="Message context to propagate into the response.")
 
 
 class RecognizerLoopB64TranscribeMessage(OpenVoiceOSMessage):
-    """Message for `recognizer_loop:b64_transcribe`."""
+    """Transcribe a base64-encoded audio clip via the STT plugin, without a microphone.
+
+    Emitted by external integrations (REST API, satellite nodes) that have
+    pre-recorded audio they need converted to text. The listener responds with
+    `recognizer_loop:b64_transcribe.response`.
+    """
     message_type: str = "recognizer_loop:b64_transcribe"
     data: RecognizerLoopB64TranscribeData
 
 
 class RecognizerLoopB64TranscribeReplyData(BaseModel, extra='allow'):
-    """Data for `recognizer_loop:b64_transcribe` response."""
+    """STT transcription results returned for a `recognizer_loop:b64_transcribe` request."""
     transcriptions: List[Tuple[str, float]] = Field(
-        ..., description="List of (transcription, confidence) tuples."
+        ..., description="Ordered list of (transcript_text, confidence) pairs, best result first."
     )
-    lang: str = Field(..., description="Language of the transcription.")
-    # Allow arbitrary extra data from STT context
+    lang: str = Field(..., description="BCP-47 language code that was used for transcription.")
 
 
 class RecognizerLoopB64TranscribeResponseMessage(OpenVoiceOSMessage):
-    """Response message for `recognizer_loop:b64_transcribe`."""
+    """Return STT transcription results for a `recognizer_loop:b64_transcribe` request.
+
+    Emitted by `ovos-dinkum-listener` after the STT plugin processes the audio.
+    """
     message_type: str = "recognizer_loop:b64_transcribe.response"
     data: RecognizerLoopB64TranscribeReplyData
 
 
 class RecognizerLoopB64AudioData(BaseModel):
-    """Data for `recognizer_loop:b64_audio` message."""
-    audio_b64: str = Field(..., description="Base64 encoded audio data for processing/playback.")
-    lang: Optional[str] = Field(None, description="Language of the audio.")
-    context: Optional[MessageContext] = Field(None, description="Original message context.")
+    """Request payload for injecting a base64 audio clip into the full listener pipeline."""
+    audio_b64: str = Field(..., description="Base64-encoded audio bytes to process through the full STT + intent pipeline.")
+    lang: Optional[str] = Field(None, description="BCP-47 language code for the audio.")
+    context: Optional[MessageContext] = Field(None, description="Message context to attach to the resulting utterance message.")
 
 
 class RecognizerLoopB64AudioMessage(OpenVoiceOSMessage):
-    """Message for `recognizer_loop:b64_audio`."""
+    """Inject a base64 audio clip into the listener as if it were microphone input.
+
+    Unlike `b64_transcribe`, this runs the full pipeline: STT → wake-word
+    filtering → `recognizer_loop:utterance`. Useful for testing and satellites.
+    """
     message_type: str = "recognizer_loop:b64_audio"
     data: RecognizerLoopB64AudioData
 
 
 class RecognizerLoopB64AudioResponseMessage(OpenVoiceOSMessage):
-    """Response message for `recognizer_loop:b64_audio`."""
+    """Acknowledgement that a `recognizer_loop:b64_audio` clip was accepted for processing."""
     message_type: str = "recognizer_loop:b64_audio.response"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Generic response data for b64 audio processing.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class RecognizerLoopRecordStopMessage(OpenVoiceOSMessage):
-    """Message for `recognizer_loop:record_stop`."""
+    """Force the listener to stop the current recording pass immediately.
+
+    Emitted by any component that needs to cancel speech capture; the listener
+    abandons the current VAD window and returns to wake-word standby.
+    """
     message_type: str = "recognizer_loop:record_stop"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for record stop command.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class RecognizerLoopStateSetData(BaseModel):
-    """Data for `recognizer_loop:state.set` message."""
-    state: ListeningState = Field(..., description="The desired listening state.")
+    """Request payload for changing the listener's operating state."""
+    state: ListeningState = Field(..., description="The desired listener state to transition to.")
 
 
 class RecognizerLoopStateSetMessage(OpenVoiceOSMessage):
-    """Message for `recognizer_loop:state.set`."""
+    """Command the listener to change its operating state.
+
+    Emitted by the intent service, skills, or PHAL plugins. For example,
+    skills use this to enter sleep mode or continuous listening. The listener
+    transitions to the requested `ListeningState` immediately.
+    """
     message_type: str = "recognizer_loop:state.set"
     data: RecognizerLoopStateSetData
 
 
 class RecognizerLoopStateGetMessage(OpenVoiceOSMessage):
-    """Message for `recognizer_loop:state.get` (request for listener state)."""
+    """Query the listener's current operating state.
+
+    Any component may send this; the listener replies with
+    `recognizer_loop:state.get.response`.
+    """
     message_type: str = "recognizer_loop:state.get"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for state request.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class RecognizerLoopStateGetReplyData(BaseModel):
-    """Data for `recognizer_loop:state.get` response."""
-    state: ListeningState = Field(..., description="Current listening state of the voice loop.")
+    """Current listener state returned in reply to a state query."""
+    state: ListeningState = Field(..., description="The listener's current operating state.")
 
 
 class RecognizerLoopStateResponseMessage(OpenVoiceOSMessage):
-    """Response message for `recognizer_loop:state.get`."""
+    """Report the listener's current state in response to `recognizer_loop:state.get`.
+
+    Emitted by `ovos-dinkum-listener`.
+    """
     message_type: str = "recognizer_loop:state.get.response"
     data: RecognizerLoopStateGetReplyData
 
 
 class RecognizerLoopRecordBeginMessage(OpenVoiceOSMessage):
-    """Message for `recognizer_loop:record_begin`."""
+    """Signal that the listener has started recording user speech.
+
+    Broadcast by `ovos-dinkum-listener` when VAD detects speech onset after
+    wake-word detection. Skills and GUI can react (e.g. show a listening indicator).
+    """
     message_type: str = "recognizer_loop:record_begin"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for record begin event.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class RecognizerLoopRecordEndMessage(OpenVoiceOSMessage):
-    """Message for `recognizer_loop:record_end`."""
+    """Signal that the listener has finished recording the user's utterance.
+
+    Broadcast by `ovos-dinkum-listener` when VAD detects end-of-speech. STT
+    processing begins after this event.
+    """
     message_type: str = "recognizer_loop:record_end"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for record end event.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class RecognizerLoopSpeechRecognitionUnknownMessage(OpenVoiceOSMessage):
-    """Message for `recognizer_loop:speech.recognition.unknown`."""
+    """Signal that STT failed to produce a transcription for the recorded audio.
+
+    Emitted by `ovos-dinkum-listener` when the STT plugin returns an empty or
+    unintelligible result. This typically triggers a "I didn't catch that" response.
+    """
     message_type: str = "recognizer_loop:speech.recognition.unknown"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for unknown speech event.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class RecognizerLoopWakeWordData(BaseModel):
-    """Data for `recognizer_loop:wakeword`, `hotword`, `stopword`, `wakeupword` messages."""
-    key_phrase: str = Field(..., description="The detected key phrase.")
+    """Shared payload for all hotword/wake-word detection events."""
+    key_phrase: str = Field(..., description="The text of the detected wake/hot/stop word, e.g. 'hey mycroft'.")
     utterance: Optional[str] = Field(
-        None, description="The transcribed utterance if hotword includes transcription."
+        None, description="Full transcription of the detected segment if the WW engine also provides STT."
     )
     sound: Optional[Union[str, List[str]]] = Field(
-        None, description="Path to a sound file (or list of paths) to play on detection."
+        None, description="Sound file path(s) to play on detection (e.g. a ding sound)."
     )
     listen: Optional[bool] = Field(
-        None, description="True if the system should enter listening mode after detection."
+        None, description="If True, the listener should activate STT after this hotword."
     )
     event: Optional[str] = Field(
-        None, description="Custom event type to emit instead of default hotword events."
+        None, description="Custom bus event to emit instead of the standard wakeword event."
     )
     filename: Optional[str] = Field(
-        None, description="URI to the saved audio file of the detected hotword."
+        None, description="File URI where the captured hotword audio was saved, if recording is enabled."
     )
-    engine: str = Field(..., description="MD5 hash of the hotword engine module.")
-    time: str = Field(..., description="Timestamp of the hotword detection (milliseconds since epoch).")
-    sessionId: str = Field(..., description="Session ID associated with the detection.")
-    accountId: str = Field(..., description="Account ID associated with the detection (e.g., 'Anon').")
-    model: str = Field(..., description="Model hash or identifier used for detection.")
+    engine: str = Field(..., description="MD5 hash of the hotword plugin module used for detection.")
+    time: str = Field(..., description="Unix timestamp (milliseconds) when the hotword was detected.")
+    sessionId: str = Field(..., description="Session ID associated with this detection event.")
+    accountId: str = Field(..., description="Account ID, typically 'Anon' for local deployments.")
+    model: str = Field(..., description="Hash or path of the hotword model file that triggered the detection.")
 
 
 class RecognizerLoopWakeWordMessage(OpenVoiceOSMessage):
-    """Message for `recognizer_loop:wakeword`."""
+    """Signal that the primary wake word was detected.
+
+    Emitted by `ovos-dinkum-listener` when the configured wake-word model
+    fires. Triggers the STT recording phase. Subscribers include the GUI
+    (listening indicator) and skills that track wake-word events.
+    """
     message_type: str = "recognizer_loop:wakeword"
     data: RecognizerLoopWakeWordData
 
 
 class RecognizerLoopHotwordMessage(OpenVoiceOSMessage):
-    """Message for `recognizer_loop:hotword`."""
+    """Signal that any hotword (not necessarily the primary wake word) was detected.
+
+    A broader variant of `recognizer_loop:wakeword` — covers all hotword
+    types including secondary wake words and custom hotwords. Used for
+    telemetry and multi-trigger scenarios.
+    """
     message_type: str = "recognizer_loop:hotword"
     data: RecognizerLoopWakeWordData
 
 
 class RecognizerLoopStopwordMessage(OpenVoiceOSMessage):
-    """Message for `recognizer_loop:stopword`."""
+    """Signal that a stop word was detected, interrupting the current listen cycle.
+
+    Emitted by `ovos-dinkum-listener` when a word configured as a stop
+    trigger fires (e.g. 'stop', 'cancel'). The listener aborts recording.
+    """
     message_type: str = "recognizer_loop:stopword"
     data: RecognizerLoopWakeWordData
 
 
 class RecognizerLoopWakeupWordMessage(OpenVoiceOSMessage):
-    """Message for `recognizer_loop:wakeupword`."""
+    """Signal that a wake-up word was detected while in sleep mode.
+
+    Emitted when the device is sleeping and a configured wake-up phrase
+    brings it back to active listening. Different from the primary wake word.
+    """
     message_type: str = "recognizer_loop:wakeupword"
     data: RecognizerLoopWakeWordData
 
 
 class RecognizerLoopUtteranceData(BaseModel, extra='allow'):
-    """Data for `recognizer_loop:utterance` message."""
-    utterances: List[str] = Field(..., description="List of transcribed utterances.")
-    lang: str = Field(..., description="Language of the utterance (e.g., 'en-us').")
-    # Additional fields from _stt_audio callback
-    filename: Optional[str] = Field(None, description="URI to the saved audio file of the utterance.")
+    """STT result payload delivered to the intent pipeline."""
+    utterances: List[str] = Field(..., description="Ordered list of transcription candidates, best first. The intent service evaluates all of them.")
+    lang: str = Field(..., description="BCP-47 language code of the utterance, e.g. 'en-us'.")
+    filename: Optional[str] = Field(None, description="File URI of the saved audio recording, if audio logging is enabled.")
     transcriptions: Optional[List[Tuple[str, float]]] = Field(
-        None, description="List of (transcription, confidence) tuples."
+        None, description="Full (transcript, confidence) pairs from the STT engine, if available."
     )
     transcription: Optional[str] = Field(
-        None, description="Deprecated: Main transcription string."
+        None, description="Deprecated — use `utterances[0]` instead."
     )
     recording_name: Optional[str] = Field(
-        None, description="Name of the recording if saved (for _save_recording)."
+        None, description="Label for the recording file when audio saving is enabled."
     )
 
 
 class RecognizerLoopUtteranceMessage(OpenVoiceOSMessage):
-    """Message for `recognizer_loop:utterance`."""
+    """Deliver a speech-to-text result into the intent pipeline.
+
+    The most important input message in OVOS. Emitted by
+    `ovos-dinkum-listener` after a successful STT pass, or injected directly
+    by tests and satellites. The intent service parses `utterances` through all
+    configured pipeline plugins (adapt, padatious, converse, fallback) and
+    dispatches to the matching skill.
+    """
     message_type: str = "recognizer_loop:utterance"
     data: RecognizerLoopUtteranceData
 
 
 class RecognizerLoopSleepMessage(OpenVoiceOSMessage):
-    """Message for `recognizer_loop:sleep`."""
+    """Put the listener into sleep mode — stop responding to the primary wake word.
+
+    Emitted by the sleep skill or directly by components that need to suppress
+    wake-word activation (e.g. during audio playback). The listener will only
+    respond to the configured wake-up word until woken.
+    """
     message_type: str = "recognizer_loop:sleep"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for sleep command.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class RecognizerLoopWakeUpMessage(OpenVoiceOSMessage):
-    """Message for `recognizer_loop:wake_up`."""
+    """Wake the listener from sleep mode, resuming normal wake-word detection.
+
+    Emitted by the sleep skill or any component after calling sleep. Mirrors
+    `recognizer_loop:sleep`.
+    """
     message_type: str = "recognizer_loop:wake_up"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for wake up command.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class MycroftAwokenMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.awoken`."""
+    """Broadcast that the device has woken from sleep mode.
+
+    Emitted by `ovos-dinkum-listener` after successfully transitioning from
+    sleep state to wake-word standby. Skills can react (e.g. play a chime,
+    show a GUI indicator).
+    """
     message_type: str = "mycroft.awoken"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for awoken event.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class MycroftMicMuteMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.mic.mute`."""
+    """Hardware-mute the microphone — no audio reaches the VAD or STT.
+
+    Emitted by privacy-sensitive contexts (e.g. mute button press, PHAL plugin).
+    The listener stops processing all audio until unmuted.
+    """
     message_type: str = "mycroft.mic.mute"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for mic mute command.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class MycroftMicUnmuteMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.mic.unmute`."""
+    """Unmute the microphone after a `mycroft.mic.mute`.
+
+    Emitted by the same contexts that issued the mute. Resumes full listener
+    operation including wake-word detection.
+    """
     message_type: str = "mycroft.mic.unmute"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for mic unmute command.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class MycroftMicMuteToggleMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.mic.mute.toggle`."""
+    """Toggle the microphone mute state (mute if active, unmute if muted).
+
+    Convenient single-message alternative to separate mute/unmute commands,
+    typically bound to a hardware button or GUI control.
+    """
     message_type: str = "mycroft.mic.mute.toggle"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for mic mute toggle command.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class MycroftMicGetStatusMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.mic.get_status` (request for mic status)."""
+    """Query whether the microphone and listener are running or muted.
+
+    Any component may send this; `ovos-dinkum-listener` responds with
+    `mycroft.mic.get_status.response`.
+    """
     message_type: str = "mycroft.mic.get_status"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for status request.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class MycroftMicGetStatusReplyData(BaseModel):
-    """Data for `mycroft.mic.get_status` response."""
-    status: str = Field(..., description="Current status of the microphone/listener (e.g., 'running', 'muted').")
+    """Microphone status returned in reply to `mycroft.mic.get_status`."""
+    status: str = Field(..., description="Current listener/mic state string, e.g. 'running', 'muted', 'sleeping'.")
 
 
 class MycroftMicGetStatusResponseMessage(OpenVoiceOSMessage):
-    """Response message for `mycroft.mic.get_status`."""
+    """Report the microphone / listener status in response to `mycroft.mic.get_status`.
+
+    Emitted by `ovos-dinkum-listener`.
+    """
     message_type: str = "mycroft.mic.get_status.response"
     data: MycroftMicGetStatusReplyData
 
 
 class MycroftMicListenMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.mic.listen`."""
+    """Force the listener into active recording mode immediately, without a wake word.
+
+    Emitted by skills (via `self.get_response()`) or external triggers that
+    need to capture user speech on demand. Equivalent to manually pressing
+    a listen button.
+    """
     message_type: str = "mycroft.mic.listen"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for mic listen command.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 # --- Example Usage ---
-if __name__ == "__main__":
-    print("--- Demonstrating Listener Message Models ---")
-
-    # Create a dummy session and context for demonstration
-    dummy_session = Session(session_id="test-session-123", lang="en-us")
-    dummy_context = MessageContext(source="playback_thread", session=dummy_session)
-
-    # Example: mycroft.mic.listen
-    mic_listen_message = MycroftMicListenMessage(context=dummy_context)
-    print(f"\nMic Listen Message:\n{mic_listen_message.model_dump_json(indent=2)}")
-
-    # Example: Mycroft Awoken
-    awoken_message = MycroftAwokenMessage(context=dummy_context)
-    print(f"\nMycroft Awoken Message:\n{awoken_message.model_dump_json(indent=2)}")
-
-    # Example: Recognizer Loop Wake Word
-    ww_data = RecognizerLoopWakeWordData(
-        key_phrase="hey mycroft",
-        utterance="hey mycroft play some music",
-        sound="file:///path/to/sound.wav",
-        listen=True,
-        engine="mock-ww-engine-hash",
-        time="1678886400000",
-        sessionId="test-listener-session-789",
-        accountId="Anon",
-        model="0"
-    )
-    ww_message = RecognizerLoopWakeWordMessage(data=ww_data, context=dummy_context)
-    print(f"\nRecognizer Loop Wake Word Message:\n{ww_message.model_dump_json(indent=2)}")
-
-    # Example: Recognizer Loop Utterance
-    utt_data = RecognizerLoopUtteranceData(
-        utterances=["play some music", "play music"],
-        lang="en-us",
-        filename="file:///tmp/utterance_audio.wav",
-        transcriptions=[("play some music", 0.95), ("play music", 0.9)]
-    )
-    utt_message = RecognizerLoopUtteranceMessage(data=utt_data, context=dummy_context)
-    print(f"\nRecognizer Loop Utterance Message:\n{utt_message.model_dump_json(indent=2)}")
-
-    # Example: Mycroft Mic Mute
-    mute_message = MycroftMicMuteMessage(context=dummy_context)
-    print(f"\nMycroft Mic Mute Message:\n{mute_message.model_dump_json(indent=2)}")
-
-    # Example: Recognizer Loop State Set
-    state_set_data = RecognizerLoopStateSetData(state=ListeningState.RECORDING)
-    state_set_message = RecognizerLoopStateSetMessage(data=state_set_data, context=dummy_context)
-    print(f"\nRecognizer Loop State Set Message:\n{state_set_message.model_dump_json(indent=2)}")

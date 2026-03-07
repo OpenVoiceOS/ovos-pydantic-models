@@ -3,11 +3,12 @@ from typing import Dict, Any, List, Optional
 
 from pydantic import BaseModel, Field, ConfigDict
 
-from ovos_pydantic_models.message import OpenVoiceOSMessage, MessageContext
+from ovos_pydantic_models.message import OpenVoiceOSMessage
 from ovos_pydantic_models.session import Session
 
 
 class IntentHandlerMatch(BaseModel):
+    """Represents a successful intent match returned by a pipeline plugin."""
     match_type: str
     match_data: Dict[str, Any]
     skill_id: Optional[str] = None
@@ -17,261 +18,275 @@ class IntentHandlerMatch(BaseModel):
     model_config = ConfigDict(extra='allow')
 
 
-# Enums for ConverseMode and ConverseActivationMode (from ovos_workshop.permissions)
 class ConverseMode(str, Enum):
-    """
-    Defines how the converse system handles skill conversations.
-    """
-    ACCEPT_ALL = "accept_all"
-    BLACKLIST = "blacklist"
-    WHITELIST = "whitelist"
+    """Controls which skills are allowed to participate in the converse pipeline."""
+    ACCEPT_ALL = "accept_all"   # Any skill in the converse stack can handle utterances
+    BLACKLIST = "blacklist"     # All except explicitly blacklisted skill IDs
+    WHITELIST = "whitelist"     # Only explicitly whitelisted skill IDs
 
 
 class ConverseActivationMode(str, Enum):
-    """
-    Defines the conditions under which a skill is allowed to activate itself
-    (jump to the front of the active skills list).
-    """
-    ACCEPT_ALL = "accept_all"
-    PRIORITY = "priority"
-    BLACKLIST = "blacklist"
-    WHITELIST = "whitelist"
+    """Controls which skills are permitted to add themselves to the converse stack."""
+    ACCEPT_ALL = "accept_all"   # Any skill may activate itself
+    PRIORITY = "priority"       # Activate only if no higher-priority skill is active
+    BLACKLIST = "blacklist"     # All except blacklisted skill IDs
+    WHITELIST = "whitelist"     # Only whitelisted skill IDs
 
 
 # --- Converse Service Message Models ---
 
-
 class IntentServiceSkillsActivateData(BaseModel):
-    """Data for `intent.service.skills.activate` message."""
-    skill_id: str = Field(..., description="The ID of the skill to activate.")
+    """Request payload for adding a skill to the converse priority stack."""
+    skill_id: str = Field(..., description="Skill ID to add to the top of the converse stack.")
+    timeout: Optional[float] = Field(
+        None, description="How long (minutes) the skill stays active before auto-deactivation. -1 means indefinite."
+    )
+    model_config = ConfigDict(extra='allow')
 
 
 class IntentServiceSkillsActivateMessage(OpenVoiceOSMessage):
-    """Message for `intent.service.skills.activate`."""
+    """Add a skill to the converse priority stack so it gets first refusal on utterances.
+
+    Emitted by a skill (via `self.make_active()`) or the intent service after
+    a skill handles an intent. The skill receives `{skill_id}.activate` once
+    confirmed. Active skills' `converse()` method is called before any intent
+    matching on subsequent utterances.
+    """
     message_type: str = "intent.service.skills.activate"
     data: IntentServiceSkillsActivateData
 
+
+class IntentServiceSkillsActivatedData(BaseModel):
+    """Confirmation payload for a skill being added to the converse stack."""
+    skill_id: str = Field(..., description="Skill ID that was successfully activated.")
+
+
 class IntentServiceSkillsActivatedMessage(OpenVoiceOSMessage):
-    """Message for `intent.service.skills.activated`."""
+    """Confirm that a skill was successfully added to the converse stack.
+
+    Emitted by the intent service in response to `intent.service.skills.activate`.
+    The skill and any interested observers receive this event.
+    """
     message_type: str = "intent.service.skills.activated"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for skills activated event.")
+    data: IntentServiceSkillsActivatedData
 
 
 class IntentServiceActiveSkillsGetMessage(OpenVoiceOSMessage):
-    """Message for `intent.service.active_skills.get`."""
+    """Query the ordered list of skills currently in the converse stack.
+
+    Any component may request this; the intent service replies with
+    `intent.service.active_skills.reply`. Useful for debugging and GUI displays.
+    """
     message_type: str = "intent.service.active_skills.get"
     data: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
 
 class IntentServiceActiveSkillsReplyData(BaseModel):
-    """Data for `intent.service.active_skills.reply` message."""
-    skills: List[str] = Field(..., description="Ordered list of active skill IDs.")
+    """Ordered converse stack returned in reply to an active-skills query."""
+    skills: List[str] = Field(..., description="Skill IDs in converse-priority order, highest priority first.")
 
 
 class IntentServiceActiveSkillsReplyMessage(OpenVoiceOSMessage):
-    """Message for `intent.service.active_skills.reply`."""
+    """Return the ordered converse skill stack in reply to `intent.service.active_skills.get`.
+
+    Emitted by the intent service.
+    """
     message_type: str = "intent.service.active_skills.reply"
     data: IntentServiceActiveSkillsReplyData
 
 
 class SkillConverseGetResponseEnableData(BaseModel):
-    """Data for `skill.converse.get_response.enable` message."""
-    skill_id: str = Field(..., description="The ID of the skill to enable get_response mode for.")
+    """Request payload for enabling get_response mode on a skill."""
+    skill_id: str = Field(..., description="Skill ID that called `get_response()` and is now waiting for user input.")
 
 
 class SkillConverseGetResponseEnableMessage(OpenVoiceOSMessage):
-    """Message for `skill.converse.get_response.enable`."""
+    """Tell the intent service that a skill is waiting for a direct user response.
+
+    Emitted internally when a skill calls `self.get_response()`. The intent
+    service routes the next utterance directly to this skill's converse handler
+    rather than through the normal pipeline. Disables fallback temporarily.
+    """
     message_type: str = "skill.converse.get_response.enable"
     data: SkillConverseGetResponseEnableData
 
 
 class SkillConverseGetResponseDisableData(BaseModel):
-    """Data for `skill.converse.get_response.disable` message."""
-    skill_id: str = Field(..., description="The ID of the skill to disable get_response mode for.")
+    """Request payload for exiting get_response mode on a skill."""
+    skill_id: str = Field(..., description="Skill ID that is done waiting for user input.")
 
 
 class SkillConverseGetResponseDisableMessage(OpenVoiceOSMessage):
-    """Message for `skill.converse.get_response.disable`."""
+    """Tell the intent service that a skill's get_response() wait is over.
+
+    Emitted after the skill receives the user's response or times out.
+    Normal pipeline routing resumes for subsequent utterances.
+    """
     message_type: str = "skill.converse.get_response.disable"
     data: SkillConverseGetResponseDisableData
 
 
 class ConverseSkillData(BaseModel):
-    """Data for `converse:skill` message."""
-    skill_id: str = Field(..., description="The ID of the skill to converse with.")
-    # The original message data (utterances, lang) is also passed
-    utterances: List[str] = Field(..., description="List of utterance strings to process.")
-    lang: str = Field(..., description="4-letter ISO language code for the utterances.")
-    model_config = ConfigDict(extra='allow')  # Allow other data from original message
+    """Payload for routing an utterance directly to a named skill's converse handler."""
+    skill_id: str = Field(..., description="Target skill ID whose converse() method will be called.")
+    utterances: List[str] = Field(..., description="Transcription candidates, best first.")
+    lang: str = Field(..., description="BCP-47 language code of the utterances.")
+    model_config = ConfigDict(extra='allow')
 
 
 class ConverseSkillMessage(OpenVoiceOSMessage):
-    """Message for `converse:skill`."""
+    """Route an utterance to a specific skill's converse() method, bypassing the normal pipeline.
+
+    Emitted by the intent service when it has determined a particular skill
+    should handle the utterance in its converse phase (e.g. get_response flows).
+    """
     message_type: str = "converse:skill"
     data: ConverseSkillData
 
 
 class SkillConverseRequestData(BaseModel):
-    """
-    Data for `{skill_id}.converse.request` message.
-    This message is forwarded from `converse:skill`, so it includes the same data.
-    """
-    skill_id: str = Field(..., description="The ID of the skill targeted for converse request.")
-    utterances: List[str] = Field(..., description="List of utterance strings to process.")
-    lang: str = Field(..., description="4-letter ISO language code for the utterances.")
-    model_config = ConfigDict(extra='allow')  # Allow other data from original message
+    """Payload for asking a specific skill to process an utterance in converse mode."""
+    skill_id: str = Field(..., description="Target skill ID.")
+    utterances: List[str] = Field(..., description="Transcription candidates, best first.")
+    lang: str = Field(..., description="BCP-47 language code.")
+    model_config = ConfigDict(extra='allow')
 
 
 class SkillConverseRequestMessage(OpenVoiceOSMessage):
+    """Ask a specific skill to handle an utterance via its `converse()` method.
+
+    Dynamic message type: `{skill_id}.converse.request`. Emitted by the intent
+    service per-skill during the converse phase. The skill replies with
+    `skill.converse.response` indicating whether it handled the utterance.
     """
-    Message for `{skill_id}.converse.request`.
-    The `message_type` will be dynamically set to the skill ID followed by `.converse.request`.
-    """
-    message_type: str = Field(..., description="Dynamic message type, e.g., 'my-skill-id.converse.request'.")
+    message_type: str = Field(..., description="Dynamic: '{skill_id}.converse.request'.")
     data: SkillConverseRequestData
 
 
 class IntentServiceSkillsDeactivateData(BaseModel):
-    """Data for `intent.service.skills.deactivate` message."""
-    skill_id: str = Field(..., description="The ID of the skill to deactivate from the active skills list.")
+    """Request payload for removing a skill from the converse stack."""
+    skill_id: str = Field(..., description="Skill ID to remove from the converse stack.")
+    model_config = ConfigDict(extra='allow')
 
 
 class IntentServiceSkillsDeactivateMessage(OpenVoiceOSMessage):
-    """Message for `intent.service.skills.deactivate`."""
+    """Remove a skill from the converse priority stack.
+
+    Emitted by a skill via `self.cancel_active()`, by the intent service
+    after a deactivation timeout, or by `intent.service.skills.deactivate`
+    from external control. The skill receives `{skill_id}.deactivate` once done.
+    """
     message_type: str = "intent.service.skills.deactivate"
     data: IntentServiceSkillsDeactivateData
 
+
 class IntentServiceSkillsDeactivatedData(BaseModel):
-    """Data for `intent.service.skills.deactivated` message."""
-    skill_id: str = Field(..., description="The ID of the skill that was deactivated.")
+    """Confirmation that a skill was removed from the converse stack."""
+    skill_id: str = Field(..., description="Skill ID that was deactivated.")
 
 
 class IntentServiceSkillsDeactivatedMessage(OpenVoiceOSMessage):
-    """Message for `intent.service.skills.deactivated`."""
+    """Confirm that a skill was successfully removed from the converse stack.
+
+    Emitted by the intent service in response to a deactivate request.
+    """
     message_type: str = "intent.service.skills.deactivated"
     data: IntentServiceSkillsDeactivatedData
 
 
 class SkillConversePongData(BaseModel):
-    """Data for `skill.converse.pong` message."""
-    skill_id: str = Field(..., description="The ID of the skill responding to the ping.")
-    can_handle: bool = Field(True, description="True if the skill can handle the current conversation.")
-    model_config = ConfigDict(extra='allow')  # Allow other data from original ping message
+    """A skill's response to a converse capability ping."""
+    skill_id: str = Field(..., description="Skill ID responding to the ping.")
+    can_handle: bool = Field(True, description="True if this skill's converse() is willing to handle the current utterance.")
+    model_config = ConfigDict(extra='allow')
 
 
 class SkillConversePongMessage(OpenVoiceOSMessage):
-    """Message for `skill.converse.pong`."""
+    """A skill declares whether it can handle the current utterance in converse mode.
+
+    Emitted by the skill in reply to `{skill_id}.converse.ping`. The intent
+    service collects pongs to determine which active skill to route to.
+    """
     message_type: str = "skill.converse.pong"
     data: SkillConversePongData
 
 
 class SkillConversePingData(BaseModel):
-    """
-    Data for `{skill_id}.converse.ping` message.
-    This message is forwarded from the original utterance message.
-    """
-    skill_id: str = Field(..., description="The ID of the skill being pinged for converse capability.")
-    utterances: List[str] = Field(..., description="List of utterance strings to check for converse capability.")
-    lang: str = Field(..., description="4-letter ISO language code for the utterances.")
-    model_config = ConfigDict(extra='allow')  # Allow other data from original message
+    """Poll payload sent to a specific skill asking if it wants to handle the utterance."""
+    skill_id: str = Field(..., description="Target skill being polled.")
+    utterances: List[str] = Field(..., description="Transcription candidates the skill should evaluate.")
+    lang: str = Field(..., description="BCP-47 language code.")
+    model_config = ConfigDict(extra='allow')
 
 
 class SkillConversePingMessage(OpenVoiceOSMessage):
+    """Poll a skill to see if it wants to handle the current utterance in converse mode.
+
+    Dynamic message type: `{skill_id}.converse.ping`. Sent by the intent service
+    to each active skill in priority order. The skill replies with
+    `skill.converse.pong`. This two-step ping/pong avoids invoking converse()
+    on skills that won't handle the utterance.
     """
-    Message for `{skill_id}.converse.ping`.
-    The `message_type` will be dynamically set to the skill ID followed by `.converse.ping`.
-    """
-    message_type: str = Field(..., description="Dynamic message type, e.g., 'my-skill-id.converse.ping'.")
+    message_type: str = Field(..., description="Dynamic: '{skill_id}.converse.ping'.")
     data: SkillConversePingData
 
 
 class SkillConverseGetResponseMatchData(BaseModel):
+    """Utterance data delivered to a skill that called get_response() and is now waiting."""
+    utterances: List[str] = Field(..., description="The user's response utterances.")
+    lang: str = Field(..., description="BCP-47 language code.")
+    model_config = ConfigDict(extra='allow')
+
+
+# --- Skill-side converse messages ---
+
+class SkillConverseResponseData(BaseModel):
+    """A skill's verdict on whether it handled the converse request."""
+    skill_id: str = Field(..., description="Skill ID that was asked to handle the utterance.")
+    result: bool = Field(..., description="True if the skill's converse() consumed the utterance; False to pass to the next stage.")
+    error: Optional[str] = Field(None, description="Exception message if converse() raised an unhandled error.")
+    model_config = ConfigDict(extra='allow')
+
+
+class SkillConverseResponseMessage(OpenVoiceOSMessage):
+    """A skill reports whether its converse() method handled the utterance.
+
+    Emitted by the skill in reply to `{skill_id}.converse.request`. If
+    `result` is False the intent service moves to the next active skill or
+    falls through to the normal intent pipeline.
     """
-    Data for `{skill_id}.converse.get_response` match.
-    This is the data payload for the IntentHandlerMatch object returned by `match`.
+    message_type: str = "skill.converse.response"
+    data: SkillConverseResponseData
+
+
+class SkillConverseKilledData(BaseModel):
+    """Error payload emitted when a converse session is force-terminated."""
+    error: str = Field(..., description="Reason the converse session was killed (e.g. timeout, exception).")
+    model_config = ConfigDict(extra='allow')
+
+
+class SkillConverseKilledMessage(OpenVoiceOSMessage):
+    """Signal that a skill's converse() was force-terminated (timeout or error).
+
+    Dynamic message type: `{skill_id}.converse.killed`. Emitted by the intent
+    service to notify the skill its converse handling was aborted. The skill
+    should clean up any pending get_response() state.
     """
-    utterances: List[str] = Field(..., description="List of utterance strings that triggered the get_response.")
-    lang: str = Field(..., description="4-letter ISO language code for the utterances.")
-    model_config = ConfigDict(extra='allow')  # Allow other data from original message
+    message_type: str = Field(..., description="Dynamic: '{skill_id}.converse.killed'.")
+    data: SkillConverseKilledData
 
 
-# --- Example Usage ---
-if __name__ == "__main__":
-    print("--- Demonstrating Converse Service Message Models ---")
+class ConversationalIntentData(BaseModel):
+    """Entities extracted from a matched conversational intent."""
+    model_config = ConfigDict(extra='allow')
 
-    # Create a dummy session and context for demonstration
-    dummy_session = Session(session_id="test-converse-session-456", lang="en-us")
-    dummy_context = MessageContext(source="converse_service", session=dummy_session)
 
-    # Example: Activate Skill Request
-    activate_skill_data = IntentServiceSkillsActivateData(skill_id="skill-example.mycroft")
-    activate_skill_message = IntentServiceSkillsActivateMessage(data=activate_skill_data, context=dummy_context)
-    print(f"\nActivate Skill Message:\n{activate_skill_message.model_dump_json(indent=2)}")
+class ConversationalIntentMessage(OpenVoiceOSMessage):
+    """Dispatch a matched conversational intent to its handler.
 
-    # Example: Get Active Skills Request
-    get_active_skills_request = IntentServiceActiveSkillsGetMessage(context=dummy_context)
-    print(f"\nGet Active Skills Request:\n{get_active_skills_request.model_dump_json(indent=2)}")
-
-    # Example: Get Active Skills Reply
-    get_active_skills_reply_data = IntentServiceActiveSkillsReplyData(skills=["skill-a.mycroft", "skill-b.mycroft"])
-    get_active_skills_reply_message = IntentServiceActiveSkillsReplyMessage(data=get_active_skills_reply_data,
-                                                                            context=dummy_context)
-    print(f"\nGet Active Skills Reply:\n{get_active_skills_reply_message.model_dump_json(indent=2)}")
-
-    # Example: Enable Get Response
-    enable_get_response_data = SkillConverseGetResponseEnableData(skill_id="skill-my-dialog.mycroft")
-    enable_get_response_message = SkillConverseGetResponseEnableMessage(data=enable_get_response_data,
-                                                                        context=dummy_context)
-    print(f"\nEnable Get Response Message:\n{enable_get_response_message.model_dump_json(indent=2)}")
-
-    # Example: Converse Skill
-    converse_skill_data = ConverseSkillData(skill_id="skill-music.mycroft", utterances=["play some jazz"], lang="en-us")
-    converse_skill_message = ConverseSkillMessage(data=converse_skill_data, context=dummy_context)
-    print(f"\nConverse Skill Message:\n{converse_skill_message.model_dump_json(indent=2)}")
-
-    # Example: Dynamic Skill Converse Request (from converse:skill)
-    dynamic_converse_request_data = SkillConverseRequestData(
-        skill_id="skill-music.mycroft",
-        utterances=["play some jazz"],
-        lang="en-us",
-        some_extra_field="value"  # Example of extra data
-    )
-    dynamic_converse_request_message = SkillConverseRequestMessage(
-        message_type="skill-music.mycroft.converse.request",
-        data=dynamic_converse_request_data,
-        context=dummy_context
-    )
-    print(f"\nDynamic Skill Converse Request Message:\n{dynamic_converse_request_message.model_dump_json(indent=2)}")
-
-    # Example: Deactivated Skill
-    deactivated_skill_data = IntentServiceSkillsDeactivatedData(skill_id="skill-old-context.mycroft")
-    deactivated_skill_message = IntentServiceSkillsDeactivatedMessage(data=deactivated_skill_data,
-                                                                      context=dummy_context)
-    print(f"\nDeactivated Skill Message:\n{deactivated_skill_message.model_dump_json(indent=2)}")
-
-    # Example: Skill Converse Pong
-    pong_data = SkillConversePongData(skill_id="skill-music.mycroft", can_handle=True)
-    pong_message = SkillConversePongMessage(data=pong_data, context=dummy_context)
-    print(f"\nSkill Converse Pong Message:\n{pong_message.model_dump_json(indent=2)}")
-
-    # Example: Dynamic Skill Converse Ping
-    dynamic_ping_data = SkillConversePingData(
-        skill_id="skill-music.mycroft",
-        utterances=["what's playing"],
-        lang="en-us"
-    )
-    dynamic_ping_message = SkillConversePingMessage(
-        message_type="skill-music.mycroft.converse.ping",
-        data=dynamic_ping_data,
-        context=dummy_context
-    )
-    print(f"\nDynamic Skill Converse Ping Message:\n{dynamic_ping_message.model_dump_json(indent=2)}")
-
-    # Example: Skill Converse Get Response Match Data (used by IntentHandlerMatch)
-    get_response_match_data_example = SkillConverseGetResponseMatchData(
-        utterances=["yes"],
-        lang="en-us",
-        original_message_id="some-uuid"
-    )
-    print(
-        f"\nSkill Converse Get Response Match Data (example for IntentHandlerMatch):\n{get_response_match_data_example.model_dump_json(indent=2)}")
+    Dynamic message type: `{skill_id}.converse:{intent_name}`. Emitted by
+    the intent service when padatious/adapt matches an intent that was
+    registered specifically for the converse phase (via `@converse_handler`).
+    """
+    message_type: str = Field(..., description="Dynamic: '{skill_id}.converse:{intent_name}'.")
+    data: ConversationalIntentData = Field(default_factory=ConversationalIntentData, description="Extracted intent entities.")

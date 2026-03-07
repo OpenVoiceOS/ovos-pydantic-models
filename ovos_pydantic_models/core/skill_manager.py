@@ -9,229 +9,424 @@ from ovos_pydantic_models.session import Session
 # --- Skill Manager Message Models ---
 
 
+class MycroftReadyMessage(OpenVoiceOSMessage):
+    """Signal that all OVOS core services have finished starting up.
+
+    Broadcast by `ovos-core` once every required service (skills, audio,
+    listener, etc.) has reported ready. Skills and PHAL plugins subscribe to
+    this event to defer initialization work until the full system is available.
+    """
+    message_type: str = "mycroft.ready"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
 class MycroftSkillsIsReadyMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.skills.is_ready` (request for skills service readiness)."""
+    """Query whether the skills service has finished loading.
+
+    Emitted by components that need to wait for skills to be available
+    before proceeding (e.g. startup scripts, test harnesses). `ovos-core`
+    replies with `mycroft.skills.is_ready.response`.
+    """
     message_type: str = "mycroft.skills.is_ready"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for readiness request.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class MycroftSkillsIsReadyReplyData(BaseModel):
-    """Data for `mycroft.skills.is_ready.response` message."""
+    """Readiness status of the skills service."""
     status: bool = Field(..., description="True if the skills service is ready, False otherwise.")
 
 
 class MycroftSkillsIsReadyResponseMessage(OpenVoiceOSMessage):
-    """Response message for `mycroft.skills.is_ready`."""
+    """Return whether the skills service has finished loading.
+
+    Emitted by `ovos-core` in response to `mycroft.skills.is_ready`.
+    Once `status` is True, all configured skills have been loaded and trained.
+    """
     message_type: str = "mycroft.skills.is_ready.response"
     data: MycroftSkillsIsReadyReplyData
 
 
 class MycroftSkillsReadyMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.skills.ready`."""
+    """Signal that all skills have been loaded and trained successfully.
+
+    Broadcast by the skill manager once every skill's `initialize()` has
+    completed and intent training is done. This is a one-time event; use
+    `mycroft.skills.is_ready` for a query-response version.
+    """
     message_type: str = "mycroft.skills.ready"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for skills ready event.")
+    data: Dict[str, Any] = Field(default_factory=dict)
+
 
 class MycroftSkillsActivateData(BaseModel):
-    """Data for `mycroft.skills.activate` message."""
+    """Request payload for activating a specific skill."""
     skill_id: str = Field(..., description="The ID of the skill that is activating itself.")
-    # Allow other context from the original message if needed
     model_config = ConfigDict(extra='allow')
 
 
 class MycroftSkillsActivateMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.skills.activate`."""
+    """Tell the skill manager to mark a skill as active.
+
+    Emitted by a skill via `self.make_active()`. The skill manager adds it
+    to the converse stack so its `converse()` method receives first refusal
+    on subsequent utterances.
+    """
     message_type: str = "mycroft.skills.activate"
     data: MycroftSkillsActivateData
 
 
 class MycroftSkillsDeactivateData(BaseModel):
-    """Data for `mycroft.skills.deactivate` message."""
+    """Request payload for deactivating a specific skill."""
     skill_id: str = Field(..., description="The ID of the skill that is deactivating itself.")
-    # Allow other context from the original message if needed
     model_config = ConfigDict(extra='allow')
 
 
 class MycroftSkillsDeactivateMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.skills.deactivate`."""
+    """Tell the skill manager to remove a skill from the active converse stack.
+
+    Emitted by a skill via `self.cancel_active()`. The skill will no longer
+    receive converse callbacks until it activates itself again.
+    """
     message_type: str = "mycroft.skills.deactivate"
     data: MycroftSkillsDeactivateData
 
+
 class SkillManagerListData(BaseModel, extra='allow'):
-    """Data for `skillmanager.list` message (request for skill list)."""
-    # This message has no specific data payload for the request, but it's good to define it for clarity.
+    """Request payload for listing all loaded skills (empty by convention)."""
 
 
 class SkillManagerListMessage(OpenVoiceOSMessage):
-    """Message for `skillmanager.list` (request for skill list)."""
+    """Request a list of all skills currently loaded in the skill manager.
+
+    Emitted by GUI skill managers, admin tools, or debug utilities. The
+    skill manager replies with `mycroft.skills.list`.
+    """
     message_type: str = "skillmanager.list"
     data: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
 
 class MycroftSkillsListData(BaseModel, extra='allow'):
-    """Data for `mycroft.skills.list` message (response to skill list request)."""
-    # Keys are skill IDs, values are dictionaries with "active" and "id"
-    # Example: {"skill-id-1": {"active": True, "id": "skill-id-1"}}
-    # Allow arbitrary skill_id keys
+    """Skill inventory returned by the skill manager.
+
+    Keys are skill IDs; values are dicts with `"active"` (bool) and `"id"` (str).
+    Example: `{"timer.openvoiceos": {"active": True, "id": "timer.openvoiceos"}}`.
+    Extra fields are allowed for forward compatibility.
+    """
 
 
 class MycroftSkillsListMessage(OpenVoiceOSMessage):
-    """Response message for `skillmanager.list` (emitted as `mycroft.skills.list`)."""
+    """Return the list of all currently loaded skills.
+
+    Emitted by `ovos-core` in response to `skillmanager.list`. Each skill
+    entry contains at minimum `active` and `id` fields.
+    """
     message_type: str = "mycroft.skills.list"
     data: MycroftSkillsListData
 
 
 class SkillManagerDeactivateData(BaseModel):
-    """Data for `skillmanager.deactivate` message."""
+    """Request payload for disabling a specific skill."""
     skill: str = Field(..., description="The ID of the skill to deactivate.")
 
 
 class SkillManagerDeactivateMessage(OpenVoiceOSMessage):
-    """Message for `skillmanager.deactivate`."""
+    """Tell the skill manager to disable a specific skill.
+
+    Emitted by admin tools, skill manager GUIs, or the blacklist mechanism.
+    The skill's `shutdown()` is called and it is removed from the intent pipeline.
+    The skill manager replies with `skillmanager.deactivate.response`.
+    """
     message_type: str = "skillmanager.deactivate"
     data: SkillManagerDeactivateData
 
 
 class SkillManagerDeactivateResponseMessage(OpenVoiceOSMessage):
-    """Response message for `skillmanager.deactivate`."""
+    """Confirm or report failure for a skill deactivation request.
+
+    Emitted by `ovos-core` in response to `skillmanager.deactivate`.
+    An empty payload means success; populated data indicates an error.
+    """
     message_type: str = "skillmanager.deactivate.response"
-    data: Optional[Dict[str, Any]] = Field(
-        default_factory=dict, description="Optional error data if deactivation failed."
-    )
+    data: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
 
 class SkillManagerKeepData(BaseModel):
-    """Data for `skillmanager.keep` message."""
+    """Request payload for keeping one skill active while disabling all others."""
     skill: str = Field(..., description="The ID of the skill to keep active; all others will be deactivated.")
 
 
 class SkillManagerKeepMessage(OpenVoiceOSMessage):
-    """Message for `skillmanager.keep`."""
+    """Deactivate all skills except the named one.
+
+    Used for debugging and kiosk-mode deployments where only one skill
+    should be operational. The skill manager shuts down all other loaded
+    skills. Replies with `skillmanager.keep.response`.
+    """
     message_type: str = "skillmanager.keep"
     data: SkillManagerKeepData
 
 
 class SkillManagerKeepResponseMessage(OpenVoiceOSMessage):
-    """Response message for `skillmanager.keep`."""
+    """Confirm or report failure for a skillmanager.keep request.
+
+    Emitted by `ovos-core` in response to `skillmanager.keep`.
+    An empty payload means success; populated data indicates an error.
+    """
     message_type: str = "skillmanager.keep.response"
-    data: Optional[Dict[str, Any]] = Field(
-        default_factory=dict, description="Optional error data if deactivation failed."
-    )
+    data: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
 
 class SkillManagerActivateData(BaseModel):
-    """Data for `skillmanager.activate` message."""
+    """Request payload for re-enabling a specific skill or all skills."""
     skill: str = Field(..., description="The ID of the skill to activate ('all' for all deactivated skills).")
 
 
 class SkillManagerActivateMessage(OpenVoiceOSMessage):
-    """Message for `skillmanager.activate`."""
+    """Re-enable a previously deactivated skill (or all skills).
+
+    Emitted by admin tools or skill manager GUIs. Pass `skill='all'` to
+    re-enable every disabled skill simultaneously. The skill manager loads
+    and initializes the skill. Replies with `skillmanager.activate.response`.
+    """
     message_type: str = "skillmanager.activate"
     data: SkillManagerActivateData
 
 
 class SkillManagerActivateResponseMessage(OpenVoiceOSMessage):
-    """Response message for `skillmanager.activate`."""
+    """Confirm or report failure for a skill activation request.
+
+    Emitted by `ovos-core` in response to `skillmanager.activate`.
+    An empty payload means success; populated data indicates an error.
+    """
     message_type: str = "skillmanager.activate.response"
-    data: Optional[Dict[str, Any]] = Field(
-        default_factory=dict, description="Optional error data if activation failed."
-    )
+    data: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
 
 class MycroftSkillsErrorData(BaseModel):
-    """Data for `mycroft.skills.error` message."""
+    """Payload describing a skill service startup error."""
     internet_loaded: bool = Field(..., description="True if internet-dependent skills were loaded.")
     network_loaded: bool = Field(..., description="True if network-dependent skills were loaded.")
     error: Optional[str] = Field(None, description="Optional error message.")
 
 
 class MycroftSkillsErrorMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.skills.error`."""
+    """Signal that the skills service encountered an error during startup.
+
+    Emitted by `ovos-core` when skill loading fails — for example when
+    network-dependent skills could not be loaded due to no internet access.
+    """
     message_type: str = "mycroft.skills.error"
     data: MycroftSkillsErrorData
 
 
 class MycroftSkillsInitializedMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.skills.initialized`."""
+    """Signal that the skills service has finished its initialization phase.
+
+    Emitted by `ovos-core` once the skill loader completes its first pass.
+    Some skills may still be loading asynchronously; use `mycroft.skills.ready`
+    for the fully-trained signal.
+    """
     message_type: str = "mycroft.skills.initialized"
-    data: Dict[str, Any] = Field(default_factory=dict,
-                                 description="Empty data payload for initialization complete event.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class MycroftSkillsTrainMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.skills.train` (request for intent training)."""
+    """Request all pipeline plugins to re-train from current intent files.
+
+    Emitted after skills are added or updated. Forces Padatious, Adapt,
+    and other trainable pipeline plugins to rebuild their models. The skill
+    manager replies with `mycroft.skills.trained`.
+    """
     message_type: str = "mycroft.skills.train"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for training request.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class MycroftSkillsTrainedData(BaseModel):
-    """Data for `mycroft.skills.trained` message (response to training request)."""
+    """Result of an intent training pass."""
     error: Optional[str] = Field(None, description="Error message if training failed.")
 
 
 class MycroftSkillsTrainedMessage(OpenVoiceOSMessage):
-    """Response message for `mycroft.skills.train` (emitted as `mycroft.skills.trained`)."""
+    """Signal that intent training has completed.
+
+    Emitted by `ovos-core` after a `mycroft.skills.train` request. If
+    `error` is set, training failed and the pipeline may be stale.
+    """
     message_type: str = "mycroft.skills.trained"
     data: MycroftSkillsTrainedData
 
 
-# --- Example Usage ---
-if __name__ == "__main__":
-    print("--- Demonstrating Skill Manager Message Models ---")
+class MycroftSkillEnableIntentData(BaseModel):
+    """Payload for re-enabling a previously disabled intent."""
+    intent_name: str = Field(..., description="Intent name to enable.")
 
-    # Create a dummy session and context for demonstration
-    dummy_session = Session(session_id="test-skill-manager-session-101", lang="en-us")
-    dummy_context = MessageContext(source="skill_manager", session=dummy_session)
 
-    # Example: Skill Manager List request
-    skill_list_request = SkillManagerListMessage(context=dummy_context)
-    print(f"\nSkill Manager List Request:\n{skill_list_request.model_dump_json(indent=2)}")
+class MycroftSkillEnableIntentMessage(OpenVoiceOSMessage):
+    """Re-enable a previously disabled intent in the pipeline.
 
-    # Example: Mycroft Skills List response
-    skills_list_data = MycroftSkillsListData(
-        **{"skill-a.mycroft": {"active": True, "id": "skill-a.mycroft"},
-           "skill-b.mycroft": {"active": False, "id": "skill-b.mycroft"}}
-    )
-    skills_list_response = MycroftSkillsListMessage(data=skills_list_data, context=dummy_context)
-    print(f"\nMycroft Skills List Response:\n{skills_list_response.model_dump_json(indent=2)}")
+    Emitted by skills via `self.enable_intent()`. The intent service
+    re-registers the named intent so it can match utterances again.
+    """
+    message_type: str = "mycroft.skill.enable_intent"
+    data: MycroftSkillEnableIntentData
 
-    # Example: Deactivate skill
-    deactivate_data = SkillManagerDeactivateData(skill="skill-to-deactivate.mycroft")
-    deactivate_message = SkillManagerDeactivateMessage(data=deactivate_data, context=dummy_context)
-    print(f"\nDeactivate Skill Message:\n{deactivate_message.model_dump_json(indent=2)}")
 
-    # Example: Mycroft Skills Error
-    skills_error_data = MycroftSkillsErrorData(internet_loaded=False, network_loaded=True,
-                                               error="Some skills failed to load due to missing internet.")
-    skills_error_message = MycroftSkillsErrorMessage(data=skills_error_data, context=dummy_context)
-    print(f"\nSkills Error Message:\n{skills_error_message.model_dump_json(indent=2)}")
+class MycroftSkillDisableIntentData(BaseModel):
+    """Payload for temporarily disabling an intent."""
+    intent_name: str = Field(..., description="Intent name to disable.")
 
-    # Example: Mycroft Skills Train request and response
-    skills_train_request = MycroftSkillsTrainMessage(context=dummy_context)
-    print(f"\nSkills Train Request:\n{skills_train_request.model_dump_json(indent=2)}")
 
-    skills_trained_data = MycroftSkillsTrainedData()  # No error
-    skills_trained_response = MycroftSkillsTrainedMessage(data=skills_trained_data, context=dummy_context)
-    print(f"\nSkills Trained Response:\n{skills_trained_response.model_dump_json(indent=2)}")
-    # Example: Mycroft Skills Activate
-    skills_activate_data = MycroftSkillsActivateData(skill_id="skill-activated.mycroft")
-    skills_activate_message = MycroftSkillsActivateMessage(data=skills_activate_data, context=dummy_context)
-    print(f"\nMycroft Skills Activate Message:\n{skills_activate_message.model_dump_json(indent=2)}")
+class MycroftSkillDisableIntentMessage(OpenVoiceOSMessage):
+    """Temporarily disable an intent in the pipeline.
 
-    # Example: Mycroft Skills Deactivate
-    skills_deactivate_data = MycroftSkillsDeactivateData(skill_id="skill-deactivated.mycroft")
-    skills_deactivate_message = MycroftSkillsDeactivateMessage(data=skills_deactivate_data, context=dummy_context)
-    print(f"\nMycroft Skills Deactivate Message:\n{skills_deactivate_message.model_dump_json(indent=2)}")
+    Emitted by skills via `self.disable_intent()`. The named intent is
+    removed from the active pipeline until re-enabled, allowing skills to
+    implement mode-dependent intent sets.
+    """
+    message_type: str = "mycroft.skill.disable_intent"
+    data: MycroftSkillDisableIntentData
 
-    # Example: Mycroft Skills Is Ready Request
-    skills_is_ready_request = MycroftSkillsIsReadyMessage(context=dummy_context)
-    print(f"\nMycroft Skills Is Ready Request:\n{skills_is_ready_request.model_dump_json(indent=2)}")
 
-    # Example: Mycroft Skills Is Ready Response
-    skills_is_ready_reply_data = MycroftSkillsIsReadyReplyData(status=True)
-    skills_is_ready_response = MycroftSkillsIsReadyResponseMessage(data=skills_is_ready_reply_data,
-                                                                   context=dummy_context)
-    print(f"\nMycroft Skills Is Ready Response:\n{skills_is_ready_response.model_dump_json(indent=2)}")
+class MycroftSkillSetCrossContextData(BaseModel):
+    """Payload for setting a context item visible across all skills."""
+    context: str = Field(..., description="Context key to set.")
+    word: str = Field(..., description="Context value.")
+    origin: str = Field(..., description="Skill ID that set the context.")
 
-    # Example: Mycroft Skills Ready
-    skills_ready_message = MycroftSkillsReadyMessage(context=dummy_context)
-    print(f"\nMycroft Skills Ready Message:\n{skills_ready_message.model_dump_json(indent=2)}")
+
+class MycroftSkillSetCrossContextMessage(OpenVoiceOSMessage):
+    """Set a context item that is shared across all skills.
+
+    Emitted by skills via `self.set_cross_skill_context()`. Unlike regular
+    Adapt context which is local, cross-context is visible to all skills
+    in the pipeline for the duration of the conversation.
+    """
+    message_type: str = "mycroft.skill.set_cross_context"
+    data: MycroftSkillSetCrossContextData
+
+
+class MycroftSkillRemoveCrossContextData(BaseModel):
+    """Payload for removing a shared cross-skill context item."""
+    context: str = Field(..., description="Context key to remove.")
+
+
+class MycroftSkillRemoveCrossContextMessage(OpenVoiceOSMessage):
+    """Remove a previously set cross-skill context item.
+
+    Emitted by skills via `self.remove_cross_skill_context()`. The named
+    context key is deleted from the shared context store immediately.
+    """
+    message_type: str = "mycroft.skill.remove_cross_context"
+    data: MycroftSkillRemoveCrossContextData
+
+
+class MycroftSkillHandlerStartData(BaseModel):
+    """Payload emitted when a skill's intent handler begins executing."""
+    name: str = Field(..., description="Name of the intent handler starting.")
+
+
+class MycroftSkillHandlerStartMessage(OpenVoiceOSMessage):
+    """Signal that a skill's intent handler has begun executing.
+
+    Emitted by `ovos-workshop` at the start of every `@intent_handler`
+    decorated function. Useful for performance monitoring, timeout watchdogs,
+    and the `@killable_intent` decorator.
+    """
+    message_type: str = "mycroft.skill.handler.start"
+    data: MycroftSkillHandlerStartData
+
+
+class MycroftSkillHandlerCompleteData(BaseModel):
+    """Payload emitted when a skill's intent handler finishes executing."""
+    name: str = Field(..., description="Name of the intent handler that completed.")
+
+
+class MycroftSkillHandlerCompleteMessage(OpenVoiceOSMessage):
+    """Signal that a skill's intent handler has finished executing.
+
+    Emitted by `ovos-workshop` at the end of every `@intent_handler`
+    decorated function — whether it completed normally or raised an exception.
+    Counterpart of `mycroft.skill.handler.start`.
+    """
+    message_type: str = "mycroft.skill.handler.complete"
+    data: MycroftSkillHandlerCompleteData
+
+
+class MycroftSkillsShutdownData(BaseModel):
+    """Payload identifying the skill that was shut down."""
+    id: str = Field(..., description="Skill plugin ID.")
+    folder: str = Field(..., description="Skill folder path.")
+
+
+class MycroftSkillsShutdownMessage(OpenVoiceOSMessage):
+    """Signal that a skill has been shut down and unloaded.
+
+    Emitted by the skill loader after a skill's `shutdown()` completes.
+    The skill's intents have been detached and it is no longer active.
+    """
+    message_type: str = "mycroft.skills.shutdown"
+    data: MycroftSkillsShutdownData
+
+
+class MycroftSkillsLoadingFailureData(BaseModel):
+    """Payload identifying the skill that failed to load."""
+    id: str = Field(..., description="Skill plugin ID.")
+    folder: str = Field(..., description="Skill folder path.")
+
+
+class MycroftSkillsLoadingFailureMessage(OpenVoiceOSMessage):
+    """Signal that a skill failed to load during startup.
+
+    Emitted by the skill loader when a skill's `initialize()` raises an
+    unhandled exception. The skill is not retried until the next restart.
+    """
+    message_type: str = "mycroft.skills.loading_failure"
+    data: MycroftSkillsLoadingFailureData
+
+
+class MycroftSkillsSettingsChangedData(BaseModel):
+    """Payload identifying the skill whose settings file changed."""
+    skill_id: str = Field(..., description="Skill ID whose settings changed.")
+
+
+class MycroftSkillsSettingsChangedMessage(OpenVoiceOSMessage):
+    """Signal that a skill's `settings.json` file has been updated on disk.
+
+    Emitted by the settings watcher. The skill reloads its settings dict
+    automatically; this broadcast allows other components to react.
+    Distinct from `ovos.skills.settings_changed` which is emitted by the
+    backend sync service.
+    """
+    message_type: str = "mycroft.skills.settings.changed"
+    data: MycroftSkillsSettingsChangedData
+
+
+class DetachSkillData(BaseModel):
+    """Payload identifying the skill to unload from the intent service."""
+    skill_id: str = Field(..., description="ID of the skill to detach/unload.")
+
+
+class DetachSkillMessage(OpenVoiceOSMessage):
+    """Tell the intent service to unload all data for a specific skill.
+
+    Emitted by the skill manager when a skill is being removed. The intent
+    service removes all intents, entities, and converse hooks associated
+    with the skill. Usually followed by `detach_intent`.
+    """
+    message_type: str = "detach_skill"
+    data: DetachSkillData
+
+
+class DetachIntentData(BaseModel):
+    """Payload identifying the skill whose intents should be removed."""
+    skill_id: str = Field(..., description="Skill ID whose intents to remove.")
+
+
+class DetachIntentMessage(OpenVoiceOSMessage):
+    """Remove all registered intents for a specific skill from the pipeline.
+
+    Emitted by the skill manager during skill reload or shutdown. The
+    pipeline plugins (Adapt, Padatious, etc.) remove all intent patterns
+    registered by the named skill.
+    """
+    message_type: str = "detach_intent"
+    data: DetachIntentData

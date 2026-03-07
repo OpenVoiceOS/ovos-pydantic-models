@@ -7,177 +7,330 @@ from ovos_pydantic_models.session import Session
 # --- Homescreen Manager Message Models ---
 
 class HomescreenManagerAddData(BaseModel):
-    """Data for `homescreen.manager.add` message."""
+    """Payload for registering a new homescreen with the homescreen manager."""
     id: str = Field(..., description="The unique ID of the homescreen to add.")
-    # Allow other fields if homescreen data includes more properties
     model_config = ConfigDict(extra='allow')
 
+
 class HomescreenManagerAddMessage(OpenVoiceOSMessage):
-    """Message for `homescreen.manager.add`."""
+    """Register a new homescreen skill with the homescreen manager.
+
+    Emitted by homescreen skills during `initialize()`. The homescreen
+    manager stores the registration so the homescreen can be selected,
+    activated, and displayed when the device is idle.
+    """
     message_type: str = "homescreen.manager.add"
     data: HomescreenManagerAddData
 
 
 class HomescreenManagerRemoveData(BaseModel):
-    """Data for `homescreen.manager.remove` message."""
+    """Payload for deregistering a homescreen from the homescreen manager."""
     id: str = Field(..., description="The unique ID of the homescreen to remove.")
 
+
 class HomescreenManagerRemoveMessage(OpenVoiceOSMessage):
-    """Message for `homescreen.manager.remove`."""
+    """Deregister a homescreen skill from the homescreen manager.
+
+    Emitted by homescreen skills during `shutdown()`. The homescreen manager
+    removes the entry from its registry; if it was the active homescreen,
+    a fallback homescreen is selected.
+    """
     message_type: str = "homescreen.manager.remove"
     data: HomescreenManagerRemoveData
 
+
 class HomescreenManagerListMessage(OpenVoiceOSMessage):
-    """Message for `homescreen.manager.list` (request for homescreen list)."""
+    """Request the list of all registered homescreen skills.
+
+    Emitted by settings GUIs or admin tools that present a homescreen
+    selection menu. The homescreen manager replies with
+    `homescreen.manager.list.response`.
+    """
     message_type: str = "homescreen.manager.list"
     data: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
+
 class HomescreenManagerListReplyData(BaseModel):
-    """Data for `homescreen.manager.list.response` message."""
+    """The list of all registered homescreens."""
     homescreens: List[Dict[str, Any]] = Field(
         ..., description="A list of dictionaries, each representing a homescreen with its 'id' and other properties."
     )
 
+
 class HomescreenManagerListResponseMessage(OpenVoiceOSMessage):
-    """Response message for `homescreen.manager.list`."""
+    """Return the list of all registered homescreen skills.
+
+    Emitted by the homescreen manager in response to `homescreen.manager.list`.
+    Each entry includes the homescreen `id` and any additional metadata
+    the homescreen skill registered.
+    """
     message_type: str = "homescreen.manager.list.response"
     data: HomescreenManagerListReplyData
 
+
 class HomescreenManagerGetActiveMessage(OpenVoiceOSMessage):
-    """Message for `homescreen.manager.get_active` (request for active homescreen)."""
+    """Query which homescreen is currently active.
+
+    Emitted by settings GUIs or skills that need to know which homescreen
+    is displayed when the device is idle. The homescreen manager replies
+    with `homescreen.manager.get_active.response`.
+    """
     message_type: str = "homescreen.manager.get_active"
     data: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
+
 class HomescreenManagerGetActiveReplyData(BaseModel):
-    """Data for `homescreen.manager.get_active.response` message."""
+    """The currently active homescreen, if any."""
     homescreen: Optional[Dict[str, Any]] = Field(
         None, description="The active homescreen dictionary, or None if no homescreen is active/configured."
     )
 
+
 class HomescreenManagerGetActiveResponseMessage(OpenVoiceOSMessage):
-    """Response message for `homescreen.manager.get_active`."""
+    """Return the currently active homescreen.
+
+    Emitted by the homescreen manager in response to
+    `homescreen.manager.get_active`. `homescreen` is None if no homescreen
+    has been registered or if the manager is unconfigured.
+    """
     message_type: str = "homescreen.manager.get_active.response"
     data: HomescreenManagerGetActiveReplyData
 
 
 class HomescreenManagerSetActiveData(BaseModel):
-    """Data for `homescreen.manager.set_active` message."""
+    """Payload for switching the active homescreen."""
     id: str = Field(..., description="The ID of the homescreen to set as active.")
 
+
 class HomescreenManagerSetActiveMessage(OpenVoiceOSMessage):
-    """Message for `homescreen.manager.set_active`."""
+    """Switch the active homescreen to a specific registered skill.
+
+    Emitted by settings GUIs or admin tools. The homescreen manager updates
+    its active selection and saves the preference. The new homescreen is
+    displayed the next time the device goes idle.
+    """
     message_type: str = "homescreen.manager.set_active"
     data: HomescreenManagerSetActiveData
 
 
 class HomescreenManagerDisableActiveMessage(OpenVoiceOSMessage):
-    """Message for `homescreen.manager.disable_active`."""
+    """Disable the currently active homescreen.
+
+    Emitted by settings GUIs or the homescreen manager itself when the
+    user disables the homescreen feature. The device will no longer show
+    an idle screen after this.
+    """
     message_type: str = "homescreen.manager.disable_active"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for disable active homescreen command.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class HomescreenManagerShowActiveMessage(OpenVoiceOSMessage):
-    """Message for `homescreen.manager.show_active`."""
+    """Tell the homescreen manager to display the active homescreen now.
+
+    Emitted by the device shell or skill manager when the device becomes
+    idle and no skill is presenting content. The homescreen manager
+    instructs the active homescreen skill to render its UI.
+    """
     message_type: str = "homescreen.manager.show_active"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for show active homescreen command.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class HomescreenManagerReloadListMessage(OpenVoiceOSMessage):
-    """Message for `homescreen.manager.reload.list`."""
+    """Tell the homescreen manager to rebuild its homescreen registry.
+
+    Emitted after skills are installed or reloaded. The manager re-collects
+    registrations from all loaded homescreen skills.
+    """
     message_type: str = "homescreen.manager.reload.list"
     data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class HomescreenManagerActivateDisplayData(BaseModel):
-    """Data for `homescreen.manager.activate.display` message."""
+    """Payload for activating a specific homescreen for display."""
     homescreen_id: str = Field(..., description="The ID of the homescreen to activate for display.")
 
+
 class HomescreenManagerActivateDisplayMessage(OpenVoiceOSMessage):
-    """Message for `homescreen.manager.activate.display`."""
+    """Activate a specific homescreen for display immediately.
+
+    Emitted by the homescreen manager or shell when transitioning to idle.
+    The named homescreen skill renders its QML pages in the GUI.
+    """
     message_type: str = "homescreen.manager.activate.display"
     data: HomescreenManagerActivateDisplayData
 
+
 class HomescreenRegisterExamplesData(BaseModel):
-    """Data for `homescreen.register.examples` message."""
+    """Payload for registering example utterances on the homescreen."""
     skill_id: str = Field(..., description="The ID of the skill registering examples.")
     utterances: List[str] = Field(..., description="A list of example utterances for the skill.")
     lang: str = Field(..., description="The language of the example utterances (BCP-47 code).")
 
+
 class HomescreenRegisterExamplesMessage(OpenVoiceOSMessage):
-    """Message for `homescreen.register.examples`."""
+    """Register example utterances for a skill to display on the homescreen.
+
+    Emitted by skills during `initialize()`. Homescreens that show a
+    'What can I say?' section use these utterances as prompts to help users
+    discover skill capabilities.
+    """
     message_type: str = "homescreen.register.examples"
     data: HomescreenRegisterExamplesData
 
-# --- Example Usage ---
-if __name__ == "__main__":
-    print("--- Demonstrating Homescreen Manager Message Models ---")
 
-    # Create a dummy session and context for demonstration
-    dummy_session = Session(session_id="test-homescreen-session-101", lang="en-us")
-    dummy_context = MessageContext(source="homescreen_manager", session=dummy_session)
+class HomescreenManagerAppData(BaseModel):
+    """Payload for registering a skill as a launcher app on the homescreen."""
+    skill_id: str = Field(..., description="The ID of the skill/app to register on the homescreen.")
+    name: str = Field(..., description="Display name of the app.")
+    icon: Optional[str] = Field(None, description="URL or path to the app icon.")
+    model_config = ConfigDict(extra='allow')
 
-    # Example: Add Homescreen
-    add_data = HomescreenManagerAddData(id="my-custom-homescreen", name="My Custom Homescreen", author="Me")
-    add_message = HomescreenManagerAddMessage(data=add_data, context=dummy_context)
-    print(f"\nAdd Homescreen Message:\n{add_message.model_dump_json(indent=2)}")
 
-    # Example: Remove Homescreen
-    remove_data = HomescreenManagerRemoveData(id="old-homescreen")
-    remove_message = HomescreenManagerRemoveMessage(data=remove_data, context=dummy_context)
-    print(f"\nRemove Homescreen Message:\n{remove_message.model_dump_json(indent=2)}")
+class HomescreenManagerAppMessage(OpenVoiceOSMessage):
+    """Register a skill as a tappable app icon on the homescreen.
 
-    # Example: List Homescreens Request
-    list_request = HomescreenManagerListMessage(context=dummy_context)
-    print(f"\nList Homescreens Request:\n{list_request.model_dump_json(indent=2)}")
+    Emitted by skills that support GUI touch/click activation
+    (in addition to voice). The homescreen displays an icon; tapping it
+    triggers the skill's main intent. Used by the OVOS app launcher.
+    """
+    message_type: str = "homescreen.manager.app"
+    data: HomescreenManagerAppData
 
-    # Example: List Homescreens Response
-    list_reply_data = HomescreenManagerListReplyData(
-        homescreens=[
-            {"id": "default-homescreen", "name": "Default", "active": True},
-            {"id": "my-custom-homescreen", "name": "My Custom Homescreen", "active": False}
-        ]
-    )
-    list_response = HomescreenManagerListResponseMessage(data=list_reply_data, context=dummy_context)
-    print(f"\nList Homescreens Response:\n{list_response.model_dump_json(indent=2)}")
 
-    # Example: Get Active Homescreen Request
-    get_active_request = HomescreenManagerGetActiveMessage(context=dummy_context)
-    print(f"\nGet Active Homescreen Request:\n{get_active_request.model_dump_json(indent=2)}")
+class HomescreenRegisterAppData(BaseModel):
+    """Payload for registering a skill app via the alternative homescreen.register.app protocol."""
+    skill_id: str = Field(..., description="Skill ID registering as an app.")
+    name: str = Field(..., description="Display name of the app.")
+    icon: Optional[str] = Field(None, description="URL or path to the app icon.")
+    model_config = ConfigDict(extra='allow')
 
-    # Example: Get Active Homescreen Response
-    get_active_reply_data = HomescreenManagerGetActiveReplyData(
-        homescreen={"id": "default-homescreen", "name": "Default", "active": True}
-    )
-    get_active_response = HomescreenManagerGetActiveResponseMessage(data=get_active_reply_data, context=dummy_context)
-    print(f"\nGet Active Homescreen Response:\n{get_active_response.model_dump_json(indent=2)}")
 
-    # Example: Set Active Homescreen
-    set_active_data = HomescreenManagerSetActiveData(id="my-custom-homescreen")
-    set_active_message = HomescreenManagerSetActiveMessage(data=set_active_data, context=dummy_context)
-    print(f"\nSet Active Homescreen Message:\n{set_active_message.model_dump_json(indent=2)}")
+class HomescreenRegisterAppMessage(OpenVoiceOSMessage):
+    """Register a skill as a homescreen app (alternative protocol).
 
-    # Example: Disable Active Homescreen
-    disable_active_message = HomescreenManagerDisableActiveMessage(context=dummy_context)
-    print(f"\nDisable Active Homescreen Message:\n{disable_active_message.model_dump_json(indent=2)}")
+    Functionally similar to `HomescreenManagerAppMessage` but uses the
+    `homescreen.register.app` message type used by some homescreen skins.
+    Emitted by skills during `initialize()`.
+    """
+    message_type: str = "homescreen.register.app"
+    data: HomescreenRegisterAppData
 
-    # Example: Show Active Homescreen
-    show_active_message = HomescreenManagerShowActiveMessage(context=dummy_context)
-    print(f"\nShow Active Homescreen Message:\n{show_active_message.model_dump_json(indent=2)}")
 
-    # Example: Reload Homescreen List
-    reload_list_message = HomescreenManagerReloadListMessage(context=dummy_context)
-    print(f"\nReload Homescreen List Message:\n{reload_list_message.model_dump_json(indent=2)}")
+class HomescreenWallpaperSetData(BaseModel):
+    """Payload for changing the homescreen wallpaper."""
+    wallpaper: str = Field(..., description="URL or path of the wallpaper image to set.")
 
-    # Example: Activate Display
-    activate_display_data = HomescreenManagerActivateDisplayData(homescreen_id="my-custom-homescreen")
-    activate_display_message = HomescreenManagerActivateDisplayMessage(data=activate_display_data, context=dummy_context)
-    print(f"\nActivate Display Message:\n{activate_display_message.model_dump_json(indent=2)}")
 
-   # Example: Homescreen Register Examples
-    register_examples_data = HomescreenRegisterExamplesData(
-        skill_id="skill-my-app.mycroft",
-        utterances=["open my app", "start my application"],
-        lang="en-us"
-    )
-    register_examples_message = HomescreenRegisterExamplesMessage(data=register_examples_data, context=dummy_context)
-    print(f"\nHomescreen Register Examples Message:\n{register_examples_message.model_dump_json(indent=2)}")
+class HomescreenWallpaperSetMessage(OpenVoiceOSMessage):
+    """Change the homescreen wallpaper image.
+
+    Emitted by wallpaper management skills or the wallpaper PHAL plugin.
+    The homescreen skill updates its background image and persists the
+    selection so it survives restarts.
+    """
+    message_type: str = "homescreen.wallpaper.set"
+    data: HomescreenWallpaperSetData
+
+
+class HomescreenMetadataGetMessage(OpenVoiceOSMessage):
+    """Request metadata from the homescreen manager.
+
+    Emitted by GUIs and admin tools that need to display homescreen
+    configuration (active homescreen ID, registered apps, wallpaper path).
+    """
+    message_type: str = "homescreen.metadata.get"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class MycroftDeviceShowIdleMessage(OpenVoiceOSMessage):
+    """Tell the device shell to show the idle / homescreen view.
+
+    Emitted by the intent service after an utterance completes, by the
+    skill manager when no skill is active, or by the GUI shell when it
+    detects user inactivity. The homescreen manager responds by rendering
+    the active homescreen.
+    """
+    message_type: str = "mycroft.device.show.idle"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class MycroftDeviceSettingsMessage(OpenVoiceOSMessage):
+    """Open the device settings screen.
+
+    Emitted by skills or PHAL plugins that need to direct the user to the
+    settings UI (e.g. 'Open settings' voice command). The GUI shell
+    navigates to the settings page.
+    """
+    message_type: str = "mycroft.device.settings"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class MycroftMark2RegisterIdleData(BaseModel):
+    """Payload for registering a Mark 2 idle screen handler."""
+    name: str = Field(..., description="Display name for the idle screen.")
+    id: str = Field(..., description="Skill ID registering the idle screen.")
+
+
+class MycroftMark2RegisterIdleMessage(OpenVoiceOSMessage):
+    """Register a skill as an idle screen provider for the Mark 2 shell.
+
+    Emitted by skills that provide idle screen content (clock, weather,
+    photo frame) on the Mycroft Mark 2. The shell polls registered
+    handlers in priority order when the device becomes idle.
+    """
+    message_type: str = "mycroft.mark2.register_idle"
+    data: MycroftMark2RegisterIdleData
+
+
+class MycroftMark2ResetIdleData(BaseModel):
+    """Payload for deregistering a Mark 2 idle screen handler."""
+    id: str = Field(..., description="Skill ID to stop showing as idle screen.")
+
+
+class MycroftMark2ResetIdleMessage(OpenVoiceOSMessage):
+    """Deregister a skill's idle screen from the Mark 2 shell.
+
+    Emitted by skills during `shutdown()` or when they no longer want to
+    provide an idle screen. The Mark 2 shell selects the next registered
+    idle screen provider.
+    """
+    message_type: str = "mycroft.mark2.reset_idle"
+    data: MycroftMark2ResetIdleData
+
+
+class MycroftMark2CollectIdleMessage(OpenVoiceOSMessage):
+    """Poll all registered idle screen skills to collect their registrations.
+
+    Emitted by the Mark 2 shell during startup to discover which skills
+    have registered idle screens. Each skill that has registered responds
+    by emitting `mycroft.mark2.register_idle`.
+    """
+    message_type: str = "mycroft.mark2.collect_idle"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosHomescreenDisplayedMessage(OpenVoiceOSMessage):
+    """Signal that the homescreen is now visible on screen.
+
+    Emitted by the active homescreen skill after its QML pages are shown.
+    Useful for analytics, test harnesses, and skills that need to know
+    when the device has returned to idle.
+    """
+    message_type: str = "ovos.homescreen.displayed"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosHomescreenMainViewCurrentIndexSetData(BaseModel):
+    """Payload for navigating the homescreen main view to a specific tab."""
+    index: int = Field(..., description="Index to set in the homescreen main view.")
+
+
+class OvosHomescreenMainViewCurrentIndexSetMessage(OpenVoiceOSMessage):
+    """Navigate the homescreen main view to a specific tab or page index.
+
+    Emitted by skills or the GUI shell to switch which panel is visible
+    in a multi-tab homescreen (e.g. switching between clock, weather, and
+    news panels). The homescreen skill animates to the requested index.
+    """
+    message_type: str = "ovos.homescreen.main_view.current_index.set"
+    data: OvosHomescreenMainViewCurrentIndexSetData

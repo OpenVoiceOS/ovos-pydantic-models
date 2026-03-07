@@ -9,105 +9,107 @@ from ovos_pydantic_models.session import Session
 # --- OVOS Audio Volume Message Models ---
 
 class MycroftVolumeGetMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.volume.get`."""
+    """Query the current volume level from the PHAL volume plugin.
+
+    Emitted by the volume skill or settings GUI when it needs the current
+    volume and mute state. The PHAL volume plugin replies with
+    `mycroft.volume.get.response`.
+    """
     message_type: str = "mycroft.volume.get"
-    data: Optional[Dict[str, Any]] = Field(default_factory=dict,
-                                           description="Empty data payload for volume get request.")
+    data: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
 
 class MycroftVolumeGetReplyData(BaseModel):
-    """Data for `mycroft.volume.get` response."""
+    """Current volume level and mute state from the PHAL volume plugin."""
     percent: int = Field(..., description="Current volume percentage (0-100).")
     muted: bool = Field(..., description="True if the volume is currently muted, False otherwise.")
 
 
 class MycroftVolumeGetResponseMessage(OpenVoiceOSMessage):
-    """Response message for `mycroft.volume.get`."""
+    """Return the current volume level and mute state.
+
+    Emitted by the PHAL volume plugin in response to `mycroft.volume.get`.
+    The volume skill uses this to report the current level to the user.
+    """
     message_type: str = "mycroft.volume.get.response"
     data: MycroftVolumeGetReplyData
 
 
 class VolumeSetPercentData(BaseModel):
-    """Data for `volume.set.percent` message."""
+    """Payload for setting an absolute volume as a 0.0–1.0 fraction."""
     percent: float = Field(..., ge=0.0, le=1.0, description="Volume percentage (0.0-1.0).")
 
 
 class VolumeSetPercentMessage(OpenVoiceOSMessage):
-    """Message for `volume.set.percent`."""
+    """Set the system volume to an absolute level expressed as a fraction.
+
+    Emitted by the volume skill or slider controls. The PHAL volume plugin
+    converts the 0.0–1.0 value to the platform-native volume range and
+    applies it immediately.
+    """
     message_type: str = "volume.set.percent"
     data: VolumeSetPercentData
 
 
 class MycroftVolumeIncreaseDecreaseData(BaseModel):
-    """Data for `mycroft.volume.increase` and `mycroft.volume.decrease` messages."""
+    """Relative volume change amount (0.0–1.0 fraction)."""
     percent: float = Field(..., description="Percentage change in volume (e.g., 0.1 for 10%).")
 
 
 class MycroftVolumeIncreaseMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.volume.increase`."""
+    """Increase the system volume by a relative percentage.
+
+    Emitted by the volume skill in response to 'turn it up' commands. The
+    PHAL volume plugin raises the current level by `percent` (clamped to 100%).
+    """
     message_type: str = "mycroft.volume.increase"
     data: MycroftVolumeIncreaseDecreaseData
 
 
 class MycroftVolumeDecreaseMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.volume.decrease`."""
+    """Decrease the system volume by a relative percentage.
+
+    Emitted by the volume skill in response to 'turn it down' commands. The
+    PHAL volume plugin lowers the current level by `percent` (clamped to 0%).
+    """
     message_type: str = "mycroft.volume.decrease"
     data: MycroftVolumeIncreaseDecreaseData
 
 
 class MycroftVolumeSetData(BaseModel):
-    """Data for `mycroft.volume.set` message."""
+    """Payload for setting an absolute volume as an integer percentage."""
     percent: Optional[int] = Field(None, ge=0, le=100, description="Volume percentage to set (0-100).")
     play_sound: bool = Field(False, description="Whether to play a sound when setting the volume.")
-    # Other potential fields like 'volume' (deprecated) or 'direction' (up/down) could be added if needed.
-    # For now, focusing on 'percent' as it's used directly.
 
 
 class MycroftVolumeSetMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.volume.set`."""
+    """Set the system volume to an absolute integer percentage (0–100).
+
+    Emitted by the volume skill in response to 'set volume to 50%' commands.
+    If `play_sound` is True the PHAL volume plugin plays a brief chime after
+    adjusting to confirm the new level.
+    """
     message_type: str = "mycroft.volume.set"
     data: MycroftVolumeSetData
 
 
 class MycroftVolumeUnmuteMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.volume.unmute`."""
+    """Restore audio output after a mute.
+
+    Emitted by the volume skill in response to 'unmute' voice commands or
+    a hardware unmute button press. The PHAL volume plugin restores the
+    previous volume level.
+    """
     message_type: str = "mycroft.volume.unmute"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for unmute command.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class MycroftVolumeMuteMessage(OpenVoiceOSMessage):
-    """Message for `mycroft.volume.mute`."""
+    """Silence audio output without changing the volume level.
+
+    Emitted by the volume skill in response to 'mute' voice commands or a
+    hardware mute button press. The PHAL volume plugin sets volume to zero
+    but preserves the previous level for unmute restoration.
+    """
     message_type: str = "mycroft.volume.mute"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for mute command.")
-
-
-# --- Example Usage ---
-if __name__ == "__main__":
-    print("--- Demonstrating OVOS Audio Service Message Models ---")
-
-    # Create a dummy session and context for demonstration
-    dummy_session = Session(session_id="test-audio-session-456", lang="en-us")
-    dummy_context = MessageContext(source="ovos_audio_service", session=dummy_session)
-
-    # Example: Mycroft Volume Get and Response
-    volume_get_request = MycroftVolumeGetMessage(context=dummy_context)
-    print(f"\nVolume Get Request:\n{volume_get_request.model_dump_json(indent=2)}")
-
-    volume_get_reply_data = MycroftVolumeGetReplyData(percent=75, muted=False)
-    volume_get_response = MycroftVolumeGetResponseMessage(data=volume_get_reply_data, context=dummy_context)
-    print(f"\nVolume Get Response:\n{volume_get_response.model_dump_json(indent=2)}")
-
-    # Example: Mycroft Volume Set
-    volume_set_data = MycroftVolumeSetData(percent=50, play_sound=True)
-    volume_set_message = MycroftVolumeSetMessage(data=volume_set_data, context=dummy_context)
-    print(f"\nVolume Set Message:\n{volume_set_message.model_dump_json(indent=2)}")
-
-    # Example: Volume Set Percent
-    volume_set_percent_data = VolumeSetPercentData(percent=0.75)
-    volume_set_percent_message = VolumeSetPercentMessage(data=volume_set_percent_data, context=dummy_context)
-    print(f"\nVolume Set Percent Message:\n{volume_set_percent_message.model_dump_json(indent=2)}")
-
-    # Example: Mycroft Volume Increase
-    volume_increase_data = MycroftVolumeIncreaseDecreaseData(percent=0.1)
-    volume_increase_message = MycroftVolumeIncreaseMessage(data=volume_increase_data, context=dummy_context)
-    print(f"\nMycroft Volume Increase Message:\n{volume_increase_message.model_dump_json(indent=2)}")
+    data: Dict[str, Any] = Field(default_factory=dict)

@@ -3,15 +3,16 @@ from typing import Dict, Any
 
 from pydantic import BaseModel, Field
 
-from ovos_pydantic_models.message import OpenVoiceOSMessage, MessageContext
-from ovos_pydantic_models.session import Session
+from ovos_pydantic_models.message import OpenVoiceOSMessage
 
 
-# Enum for MediaState, as defined in the original code
-class MediaState(IntEnum):
-    """
-    Represents the status of media playback.
-    (Based on Qt's QMediaPlayer.MediaStatus enum)
+class OcpMediaState(IntEnum):
+    """Qt-compatible media status enum for the OCP audio layer.
+
+    Maps to Qt's `QMediaPlayer.MediaStatus` values. Used by `ovos-audio`
+    to report the low-level state of the media pipeline — distinct from the
+    higher-level `MediaState` str enum in `skills/ocp.py` which tracks the
+    OCP playback lifecycle visible to skills.
     """
     UNKNOWN = 0
     NO_MEDIA = 1
@@ -24,70 +25,65 @@ class MediaState(IntEnum):
     INVALID_MEDIA = 8
 
 
+# Keep backward-compatible alias
+MediaState = OcpMediaState
+
+
 class OvosCommonPlayMediaStateData(BaseModel):
-    """Data for `ovos.common_play.media.state` message."""
-    state: MediaState = Field(..., description="The current media state.")
+    """Current low-level media pipeline state from the OCP audio layer."""
+    state: OcpMediaState = Field(..., description="The current media state.")
 
 
 class OvosCommonPlayMediaStateMessage(OpenVoiceOSMessage):
-    """Message for `ovos.common_play.media.state`."""
+    """Broadcast the current low-level media pipeline state.
+
+    Emitted by `ovos-audio` whenever the OCP audio backend transitions
+    between states (loading, buffering, playing, end-of-media, etc.).
+    OCP skills and the GUI subscribe to update progress indicators and
+    handle end-of-track events.
+    """
     message_type: str = "ovos.common_play.media.state"
     data: OvosCommonPlayMediaStateData
 
 
 class OvosCommonPlayCorkMessage(OpenVoiceOSMessage):
-    """Message for `ovos.common_play.cork`."""
+    """Pause OCP audio output to make room for TTS speech.
+
+    Emitted by `ovos-audio` before speaking — OCP audio is suspended
+    ('corked') so the TTS output is clearly audible. Counterpart:
+    `ovos.common_play.uncork` resumes audio after speech ends.
+    """
     message_type: str = "ovos.common_play.cork"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for cork command.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class OvosCommonPlayDuckMessage(OpenVoiceOSMessage):
-    """Message for `ovos.common_play.duck`."""
+    """Lower OCP audio volume to make TTS speech audible over music.
+
+    Emitted by `ovos-audio` as an alternative to full corking — audio
+    continues at reduced volume while TTS plays. The TTS plugin decides
+    whether to cork or duck based on configuration.
+    Counterpart: `ovos.common_play.unduck`.
+    """
     message_type: str = "ovos.common_play.duck"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for duck command.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class OvosCommonPlayUncorkMessage(OpenVoiceOSMessage):
-    """Message for `ovos.common_play.uncork`."""
+    """Resume OCP audio output after a cork pause.
+
+    Emitted by `ovos-audio` when TTS speech finishes and the OCP audio
+    stream can resume at full volume. Counterpart: `ovos.common_play.cork`.
+    """
     message_type: str = "ovos.common_play.uncork"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for uncork command.")
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class OvosCommonPlayUnduckMessage(OpenVoiceOSMessage):
-    """Message for `ovos.common_play.unduck`."""
+    """Restore OCP audio to full volume after ducking.
+
+    Emitted by `ovos-audio` when TTS speech finishes and the volume
+    reduction applied by `ovos.common_play.duck` should be lifted.
+    """
     message_type: str = "ovos.common_play.unduck"
-    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for unduck command.")
-
-
-# --- Example Usage ---
-if __name__ == "__main__":
-    print("--- Demonstrating OCP Message Models ---")
-
-    # Example: ovos.common_play.media.state
-    media_state_data = OvosCommonPlayMediaStateData(state=MediaState.INVALID_MEDIA)
-    media_state_message = OvosCommonPlayMediaStateMessage(data=media_state_data)
-    print(f"\nMedia State Message (INVALID_MEDIA):\n{media_state_message.model_dump_json(indent=2)}")
-
-    media_state_data_buffering = OvosCommonPlayMediaStateData(state=MediaState.BUFFERING_MEDIA)
-    media_state_message_buffering = OvosCommonPlayMediaStateMessage(data=media_state_data_buffering)
-    print(f"\nMedia State Message (BUFFERING_MEDIA):\n{media_state_message_buffering.model_dump_json(indent=2)}")
-
-    # Create a dummy session and context for demonstration
-    dummy_session = Session(session_id="test-session-123", lang="en-us")
-    dummy_context = MessageContext(source="playback_thread", session=dummy_session)
-
-    # Example: ovos.common_play.cork
-    cork_message = OvosCommonPlayCorkMessage(context=dummy_context)
-    print(f"\nCork Message:\n{cork_message.model_dump_json(indent=2)}")
-
-    # Example: ovos.common_play.duck
-    duck_message = OvosCommonPlayDuckMessage(context=dummy_context)
-    print(f"\nDuck Message:\n{duck_message.model_dump_json(indent=2)}")
-
-    # Example: ovos.common_play.uncork
-    uncork_message = OvosCommonPlayUncorkMessage(context=dummy_context)
-    print(f"\nUncork Message:\n{uncork_message.model_dump_json(indent=2)}")
-
-    # Example: ovos.common_play.unduck
-    unduck_message = OvosCommonPlayUnduckMessage(context=dummy_context)
-    print(f"\nUnduck Message:\n{unduck_message.model_dump_json(indent=2)}")
+    data: Dict[str, Any] = Field(default_factory=dict)

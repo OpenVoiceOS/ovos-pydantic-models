@@ -1,134 +1,170 @@
-from typing import Dict, Any, List, Optional, Tuple, Union
+from typing import Dict, Any, List, Optional, Tuple
 from enum import Enum
-from pydantic import BaseModel, Field, ConfigDict, model_validator
+from pydantic import BaseModel, Field, ConfigDict
 
-# Assuming these are available from your ovos_pydantic_models library
-from ovos_pydantic_models.message import OpenVoiceOSMessage, MessageContext
-from ovos_pydantic_models.session import Session
+from ovos_pydantic_models.message import OpenVoiceOSMessage
 
-# Enums for FallbackMode (from ovos_workshop.permissions)
+
 class FallbackMode(str, Enum):
-    """
-    Defines how the fallback system handles skill fallbacks.
-    """
-    ACCEPT_ALL = "accept_all"
-    BLACKLIST = "blacklist"
-    WHITELIST = "whitelist"
+    """Controls which fallback skills are allowed to participate in the fallback pipeline."""
+    ACCEPT_ALL = "accept_all"   # Every registered fallback skill may be tried
+    BLACKLIST = "blacklist"     # All except explicitly blacklisted skill IDs
+    WHITELIST = "whitelist"     # Only explicitly whitelisted skill IDs
 
 
 # --- Fallback Service Message Models ---
 
 class OvosSkillsFallbackRegisterData(BaseModel):
-    """Data for `ovos.skills.fallback.register` message."""
-    skill_id: str = Field(..., description="The ID of the skill registering a fallback handler.")
-    priority: int = Field(101, description="The priority of the fallback handler (lower is higher priority).")
+    """Registration payload for declaring a skill's fallback handler."""
+    skill_id: str = Field(..., description="ID of the skill registering a fallback handler.")
+    priority: int = Field(101, description="Fallback priority — lower numbers are tried first. Default 101 (low priority). Use values 1-100 for high-priority fallbacks.")
+
 
 class OvosSkillsFallbackRegisterMessage(OpenVoiceOSMessage):
-    """Message for `ovos.skills.fallback.register`."""
+    """Register a skill as a fallback handler in the intent pipeline.
+
+    Emitted by skills that extend `OVOSFallbackSkill` during initialization.
+    The intent service adds the skill to its ordered fallback list. Fallback
+    skills are tried (lowest priority number first) only after all normal
+    pipeline stages have failed.
+    """
     message_type: str = "ovos.skills.fallback.register"
     data: OvosSkillsFallbackRegisterData
 
 
 class OvosSkillsFallbackDeregisterData(BaseModel):
-    """Data for `ovos.skills.fallback.deregister` message."""
-    skill_id: str = Field(..., description="The ID of the skill deregistering its fallback handler.")
+    """Deregistration payload for removing a skill's fallback handler."""
+    skill_id: str = Field(..., description="ID of the skill removing its fallback handler.")
+
 
 class OvosSkillsFallbackDeregisterMessage(OpenVoiceOSMessage):
-    """Message for `ovos.skills.fallback.deregister`."""
+    """Remove a skill from the fallback handler list.
+
+    Emitted when a fallback skill unloads or shuts down. The intent service
+    removes the skill from the ordered fallback list immediately.
+    """
     message_type: str = "ovos.skills.fallback.deregister"
     data: OvosSkillsFallbackDeregisterData
 
 
 class OvosSkillsFallbackPingData(BaseModel):
-    """Data for `ovos.skills.fallback.ping` message."""
+    """Poll payload broadcast to all registered fallback skills."""
     range: Optional[Tuple[int, int]] = Field(
-        None, description="A tuple (start, stop) defining the priority range for fallbacks to consider."
+        None, description="(start, stop) priority range to limit which fallbacks are polled. None means all."
     )
-    # These fields are usually forwarded from the original utterance message
-    utterances: List[str] = Field(..., description="List of utterance strings to check against fallbacks.")
-    lang: str = Field(..., description="4-letter ISO language code for the utterances.")
-    model_config = ConfigDict(extra='allow') # Allow other data from original message
+    utterances: List[str] = Field(..., description="Transcription candidates the fallback should evaluate.")
+    lang: str = Field(..., description="BCP-47 language code.")
+    model_config = ConfigDict(extra='allow')
+
 
 class OvosSkillsFallbackPingMessage(OpenVoiceOSMessage):
-    """Message for `ovos.skills.fallback.ping`."""
+    """Broadcast to all fallback skills asking if any can handle the current utterance.
+
+    Emitted by the intent service after all normal pipeline stages fail. Each
+    fallback skill in the priority range evaluates the utterance and replies
+    with `ovos.skills.fallback.pong`. The highest-confidence willing skill is
+    then called via a targeted request message.
+    """
     message_type: str = "ovos.skills.fallback.ping"
     data: OvosSkillsFallbackPingData
 
 
 class OvosSkillsFallbackPongData(BaseModel):
-    """Data for `ovos.skills.fallback.pong` message."""
-    skill_id: str = Field(..., description="The ID of the skill responding to the ping.")
-    can_handle: bool = Field(True, description="True if the skill can handle the current fallback request.")
-    model_config = ConfigDict(extra='allow') # Allow other data from original ping message
+    """A fallback skill's response to a capability ping."""
+    skill_id: str = Field(..., description="Skill ID responding to the ping.")
+    can_handle: bool = Field(True, description="True if this skill's fallback handler can attempt the utterance.")
+    model_config = ConfigDict(extra='allow')
+
 
 class OvosSkillsFallbackPongMessage(OpenVoiceOSMessage):
-    """Message for `ovos.skills.fallback.pong`."""
+    """A fallback skill reports whether it can handle the current utterance.
+
+    Emitted by each registered fallback skill in reply to
+    `ovos.skills.fallback.ping`. The intent service collects pongs to pick
+    the highest-priority willing handler.
+    """
     message_type: str = "ovos.skills.fallback.pong"
     data: OvosSkillsFallbackPongData
 
 
 class OvosSkillsFallbackRequestData(BaseModel):
-    """
-    Data for `ovos.skills.fallback.{skill_id}.request` message.
-    This message is used to trigger a specific skill's fallback handler.
-    """
-    skill_id: str = Field(..., description="The ID of the skill whose fallback handler is being requested.")
-    utterances: List[str] = Field(..., description="List of utterance strings to be handled by the fallback.")
-    lang: str = Field(..., description="4-letter ISO language code for the utterances.")
-    model_config = ConfigDict(extra='allow') # Allow other data from original message
+    """Targeted fallback execution payload for a specific skill."""
+    skill_id: str = Field(..., description="ID of the skill chosen to handle the fallback.")
+    utterances: List[str] = Field(..., description="Transcription candidates to pass to the fallback handler.")
+    lang: str = Field(..., description="BCP-47 language code.")
+    model_config = ConfigDict(extra='allow')
+
 
 class OvosSkillsFallbackRequestMessage(OpenVoiceOSMessage):
+    """Ask a specific fallback skill to handle the current utterance.
+
+    Dynamic message type: `ovos.skills.fallback.{skill_id}.request`. Emitted
+    by the intent service after selecting the winning pong. The skill executes
+    its fallback handler and replies with `...response`.
     """
-    Message for `ovos.skills.fallback.{skill_id}.request`.
-    The `message_type` will be dynamically set to the skill ID.
-    """
-    message_type: str = Field(..., description="Dynamic message type, e.g., 'ovos.skills.fallback.my-skill-id.request'.")
+    message_type: str = Field(..., description="Dynamic: 'ovos.skills.fallback.{skill_id}.request'.")
     data: OvosSkillsFallbackRequestData
 
 
-# --- Example Usage ---
-if __name__ == "__main__":
-    print("--- Demonstrating Fallback Service Message Models ---")
+# --- Skill-side fallback messages ---
 
-    # Create a dummy session and context for demonstration
-    dummy_session = Session(session_id="test-fallback-session-789", lang="en-us")
-    dummy_context = MessageContext(source="fallback_service", session=dummy_session)
+class OvosSkillsFallbackStartMessage(OpenVoiceOSMessage):
+    """Signal that the fallback handler has begun executing in a skill.
 
-    # Example: Register Fallback
-    register_fallback_data = OvosSkillsFallbackRegisterData(skill_id="skill-weather.mycroft", priority=50)
-    register_fallback_message = OvosSkillsFallbackRegisterMessage(data=register_fallback_data, context=dummy_context)
-    print(f"\nRegister Fallback Message:\n{register_fallback_message.model_dump_json(indent=2)}")
+    Dynamic message type: `ovos.skills.fallback.{skill_id}.start`. Emitted
+    internally by the fallback skill before its handler runs — useful for
+    logging and timing metrics.
+    """
+    message_type: str = Field(..., description="Dynamic: 'ovos.skills.fallback.{skill_id}.start'.")
+    data: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
-    # Example: Deregister Fallback
-    deregister_fallback_data = OvosSkillsFallbackDeregisterData(skill_id="skill-weather.mycroft")
-    deregister_fallback_message = OvosSkillsFallbackDeregisterMessage(data=deregister_fallback_data, context=dummy_context)
-    print(f"\nDeregister Fallback Message:\n{deregister_fallback_message.model_dump_json(indent=2)}")
 
-    # Example: Fallback Ping
-    ping_data = OvosSkillsFallbackPingData(
-        range=(0, 100),
-        utterances=["what is the weather like"],
-        lang="en-us",
-        original_message_id="some-uuid-1"
-    )
-    ping_message = OvosSkillsFallbackPingMessage(data=ping_data, context=dummy_context)
-    print(f"\nFallback Ping Message:\n{ping_message.model_dump_json(indent=2)}")
+class OvosSkillsFallbackResponseData(BaseModel):
+    """Result payload from a fallback skill's handler execution."""
+    result: bool = Field(..., description="True if the fallback handler successfully handled the utterance and consumed it.")
+    fallback_handler: Optional[str] = Field(None, description="Python function name of the handler that was invoked.")
+    model_config = ConfigDict(extra='allow')
 
-    # Example: Fallback Pong
-    pong_data = OvosSkillsFallbackPongData(skill_id="skill-weather.mycroft", can_handle=True)
-    pong_message = OvosSkillsFallbackPongMessage(data=pong_data, context=dummy_context)
-    print(f"\nFallback Pong Message:\n{pong_message.model_dump_json(indent=2)}")
 
-    # Example: Dynamic Fallback Request
-    dynamic_fallback_request_data = OvosSkillsFallbackRequestData(
-        skill_id="skill-weather.mycroft",
-        utterances=["what's the forecast"],
-        lang="en-us",
-        some_extra_field="value" # Example of extra data
-    )
-    dynamic_fallback_request_message = OvosSkillsFallbackRequestMessage(
-        message_type="ovos.skills.fallback.skill-weather.mycroft.request",
-        data=dynamic_fallback_request_data,
-        context=dummy_context
-    )
-    print(f"\nDynamic Fallback Request Message:\n{dynamic_fallback_request_message.model_dump_json(indent=2)}")
+class OvosSkillsFallbackResponseMessage(OpenVoiceOSMessage):
+    """Report the result of a fallback handler execution back to the intent service.
+
+    Dynamic message type: `ovos.skills.fallback.{skill_id}.response`. If
+    `result` is False the intent service tries the next fallback in priority
+    order. If all fallbacks return False, `complete_intent_failure` is emitted.
+    """
+    message_type: str = Field(..., description="Dynamic: 'ovos.skills.fallback.{skill_id}.response'.")
+    data: OvosSkillsFallbackResponseData
+
+
+class OvosSkillsFallbackKilledData(BaseModel):
+    """Error payload emitted when a fallback handler is force-terminated."""
+    error: str = Field(..., description="Reason the fallback was killed (e.g. timeout, unhandled exception).")
+    model_config = ConfigDict(extra='allow')
+
+
+class OvosSkillsFallbackKilledMessage(OpenVoiceOSMessage):
+    """Signal that a fallback skill's handler was force-terminated.
+
+    Dynamic message type: `ovos.skills.fallback.{skill_id}.killed`. Emitted
+    by the intent service when a fallback times out or raises an exception.
+    The skill should clean up any state from the aborted handler.
+    """
+    message_type: str = Field(..., description="Dynamic: 'ovos.skills.fallback.{skill_id}.killed'.")
+    data: OvosSkillsFallbackKilledData
+
+
+class OvosSkillsFallbackForceTimeoutData(BaseModel):
+    """Request payload for forcibly timing out a hanging fallback handler."""
+    skill_id: str = Field(..., description="ID of the skill whose fallback handler should be aborted.")
+    model_config = ConfigDict(extra='allow')
+
+
+class OvosSkillsFallbackForceTimeoutMessage(OpenVoiceOSMessage):
+    """Force-terminate a fallback skill that is taking too long to respond.
+
+    Emitted by the intent service watchdog when a fallback handler exceeds
+    the configured timeout. Causes the skill to receive `...killed`.
+    """
+    message_type: str = "ovos.skills.fallback.force_timeout"
+    data: OvosSkillsFallbackForceTimeoutData

@@ -5,65 +5,55 @@ from ovos_pydantic_models.session import Session
 
 
 class SkillSettingsChangeData(BaseModel):
-    """Data for `skill.settings.change` message."""
+    """Payload for requesting a change to a skill's settings."""
     skill_id: str = Field(..., description="The ID of the skill whose settings are changing.")
-    # The actual settings data is usually nested here, allowing arbitrary content
     settings: Dict[str, Any] = Field(default_factory=dict, description="The new settings data for the skill.")
     model_config = ConfigDict(extra='allow')
 
+
 class SkillSettingsChangeMessage(OpenVoiceOSMessage):
-    """Message for `skill.settings.change`."""
+    """Request a change to a skill's settings.
+
+    Emitted by GUI settings panels or admin tools when the user modifies
+    a skill's configuration values. `ovos-core` applies the change and
+    persists it to the skill's `settings.json`, then broadcasts
+    `skill.settings.updated` to confirm the change.
+    """
     message_type: str = "skill.settings.change"
     data: SkillSettingsChangeData
 
+
 class SkillSettingsUpdatedData(BaseModel):
-    """Data for `skill.settings.updated` message."""
+    """Confirmation payload after a skill's settings have been saved."""
     skill_id: str = Field(..., description="The ID of the skill whose settings have been updated.")
-    # The actual settings data is usually nested here, allowing arbitrary content
     settings: Dict[str, Any] = Field(default_factory=dict, description="The updated settings data for the skill.")
     model_config = ConfigDict(extra='allow')
 
+
 class SkillSettingsUpdatedMessage(OpenVoiceOSMessage):
-    """Message for `skill.settings.updated`."""
+    """Confirm that a skill's settings have been saved successfully.
+
+    Emitted by `ovos-core` after processing a `skill.settings.change` request
+    and persisting the new values to `settings.json`. The skill's
+    `settings_change_callback` is also invoked automatically.
+    """
     message_type: str = "skill.settings.updated"
     data: SkillSettingsUpdatedData
 
+
 class OvosSkillsSettingsChangedData(BaseModel):
-    """Data for `ovos.skills.settings_changed` message."""
+    """Payload identifying the skill whose settings file was updated on disk."""
     skill_id: str = Field(..., description="The ID of the skill whose settings.json file has changed.")
 
 
 class OvosSkillsSettingsChangedMessage(OpenVoiceOSMessage):
-    """Message for `ovos.skills.settings_changed`."""
+    """Signal that a skill's settings file has been updated (e.g. by backend sync).
+
+    Emitted by the settings watchdog or backend sync service when a skill's
+    `settings.json` is written to disk by an external process (e.g. the OVOS
+    backend). The skill automatically reloads its settings and calls its
+    `settings_change_callback`. Distinct from `mycroft.skills.settings.changed`
+    which is emitted by the skill manager on in-process changes.
+    """
     message_type: str = "ovos.skills.settings_changed"
     data: OvosSkillsSettingsChangedData
-
-
-# --- Example Usage ---
-if __name__ == "__main__":
-    print("--- Demonstrating Skill Manager Message Models ---")
-
-    # Create a dummy session and context for demonstration
-    dummy_session = Session(session_id="test-skill-manager-session-101", lang="en-us")
-    dummy_context = MessageContext(source="skill_manager", session=dummy_session)
-
-    # Example: Skill settings changed
-    settings_changed_data = OvosSkillsSettingsChangedData(skill_id="my-test-skill")
-    settings_changed_message = OvosSkillsSettingsChangedMessage(data=settings_changed_data, context=dummy_context)
-    print(f"\nSettings Changed Message:\n{settings_changed_message.model_dump_json(indent=2)}")
-
- # Example: Skill Settings Change
-    settings_change_data = SkillSettingsChangeData(
-        skill_id="skill-my-settings.mycroft",
-        settings={"volume": 0.7, "mute": False}
-    )
-    settings_change_message = SkillSettingsChangeMessage(data=settings_change_data, context=dummy_context)
-    print(f"\nSkill Settings Change Message:\n{settings_change_message.model_dump_json(indent=2)}")
-
-    # Example: Skill Settings Updated
-    settings_updated_data = SkillSettingsUpdatedData(
-        skill_id="skill-my-settings.mycroft",
-        settings={"volume": 0.7, "mute": False, "last_updated": "2023-10-27"}
-    )
-    settings_updated_message = SkillSettingsUpdatedMessage(data=settings_updated_data, context=dummy_context)
-    print(f"\nSkill Settings Updated Message:\n{settings_updated_message.model_dump_json(indent=2)}")

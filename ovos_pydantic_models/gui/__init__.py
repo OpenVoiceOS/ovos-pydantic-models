@@ -26,14 +26,3 @@ class MycroftGuiUnavailableMessage(OpenVoiceOSMessage):
 
 
 # --- Example Usage ---
-if __name__ == "__main__":
-    print("--- Demonstrating Skill Manager Message Models ---")
-
-    # Create a dummy session and context for demonstration
-    dummy_session = Session(session_id="test-skill-manager-session-101", lang="en-us")
-    dummy_context = MessageContext(source="skill_manager", session=dummy_session)
-
-    # Example: GUI available
-    gui_available_data = MycroftGuiAvailableData(permanent=False)
-    gui_available_message = MycroftGuiAvailableMessage(data=gui_available_data, context=dummy_context)
-    print(f"\nGUI Available Message:\n{gui_available_message.model_dump_json(indent=2)}")
