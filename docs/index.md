@@ -1,6 +1,8 @@
 # ovos-pydantic-models Documentation
 
-Typed Pydantic v2 models for every message that flows over the OVOS MessageBus. This package is the authoritative, machine-readable specification of the OVOS bus protocol.
+> **Beta** — Message models are semi-automatically generated and under active review. Some subsystems are deprecated but documented here for historical reference. Do not treat this as a stable API contract.
+
+Typed Pydantic v2 models for every message that flows over the OVOS MessageBus. This package is the machine-readable specification of the OVOS bus protocol.
 
 ## Contents
 
@@ -8,19 +10,43 @@ Typed Pydantic v2 models for every message that flows over the OVOS MessageBus. 
 |---|---|
 | [message-base.md](message-base.md) | `OpenVoiceOSMessage`, `MessageContext`, `Session` |
 | [listener.md](listener.md) | Recognizer loop, wake word, mic control, OPM queries |
-| [audio.md](audio.md) | TTS speak, audio queue, audio service, OCP media states |
-| [intent-pipeline.md](intent-pipeline.md) | Converse, fallback, stop, context management |
-| [ocp.md](ocp.md) | OCP query protocol, media entries, enums |
+| [audio.md](audio.md) | TTS speak, audio queue, legacy audio service, OPM queries |
+| [ocp.md](ocp.md) | OCP/Common Play — query protocol, playback control, media data models, enums |
+| [intent-pipeline.md](intent-pipeline.md) | Converse, fallback, stop, context management; Adapt and Padatious (legacy) |
 | [skill-manager.md](skill-manager.md) | Skill lifecycle, settings, installer, session sync |
+| [missing-messages.md](missing-messages.md) | Tracking doc: modeled vs still missing |
+
+## Subsystem Status
+
+| Badge | Meaning |
+|---|---|
+| ⚠ **deprecated** | Backing plugin/package archived on GitHub — documented for reference only |
+| β **beta** | Actively developed, not yet officially released — messages may change |
+| ↩ **legacy** | Functional but superseded by a better alternative |
+
+### Deprecated
+- `phal.configuration_provider` — ovos-PHAL-plugin-configuration-provider archived
+- `phal.wifi_setup` — ovos-PHAL-plugin-wifi-setup archived
+- `gui.homescreen`, `gui.widgets`, `gui.media_player`, `gui.notifications` — superseded by GUI rewrite
+
+### Beta
+- `gui.namespace` — GUI protocol is unstable during the ongoing rewrite
+- `audio.video_service`, `audio.web_service` — ovos-media not yet officially launched
+
+### Legacy
+- `audio.audioservice` — being superseded by OCP (ovos-media) for media playback
+- `intents.adapt` — superseded by Padacioso / ML-based pipeline plugins
+- `intents.padatious` — superseded by Padacioso / ML-based pipeline plugins
+- `intents.core` context messages (`add_context`, `remove_context`, `clear_context`) — Adapt-specific
 
 ## Quick Start
 
-```python
+```bash
 pip install ovos-pydantic-models
 ```
 
 ```python
-from ovos_pydantic_models import SpeakMessage, SpeakData
+from ovos_pydantic_models.audio.playback import SpeakMessage, SpeakData
 
 msg = SpeakMessage(data=SpeakData(utterance="Hello world"))
 print(msg.message_type)   # "speak"
@@ -39,17 +65,17 @@ Every OVOS bus message follows this structure:
 }
 ```
 
-In this package, `type` is modelled as `message_type` on all subclasses of `OpenVoiceOSMessage`. The `data` field is typed specifically per message class. The `context` field is always a `MessageContext` (which embeds an optional `Session`).
+`type` is modelled as `message_type` on all subclasses of `OpenVoiceOSMessage`. The `data` field is typed per message class. The `context` field is always a `MessageContext` (which embeds an optional `Session`).
 
 ## Dynamic Message Types
 
-Some messages have a `message_type` that is determined at runtime (e.g., `{skill_id}.converse.ping`). These classes use:
+Some messages have a `message_type` determined at runtime (e.g., `{skill_id}.converse.ping`). These classes use:
 
 ```python
-message_type: str = Field(..., description="Dynamic message type, e.g., 'my-skill-id.converse.ping'.")
+message_type: str = Field(..., description="Dynamic: '{skill_id}.converse.ping'.")
 ```
 
-Meaning `message_type` is a **required field** you must supply at construction time:
+`message_type` is a **required field** you must supply at construction time:
 
 ```python
 from ovos_pydantic_models.intents.converse import SkillConversePingMessage, SkillConversePingData
@@ -62,9 +88,16 @@ msg = SkillConversePingMessage(
 
 ## Serialization
 
-All models support Pydantic v2 roundtrip serialization:
-
 ```python
-raw = msg.model_dump()          # → dict (for sending over the bus)
-restored = MyMessage.model_validate(raw)  # → typed model (for receiving from the bus)
+raw = msg.model_dump()                       # → dict (send over bus)
+restored = MyMessage.model_validate(raw)     # → typed model (receive from bus)
+```
+
+## Interactive Reference
+
+`docs/index.html` is a searchable, filterable web UI with all 545+ message types organized by subsystem, with deprecated/beta/legacy badges.
+
+```bash
+python -m http.server 8080 --directory docs
+# open http://localhost:8080
 ```

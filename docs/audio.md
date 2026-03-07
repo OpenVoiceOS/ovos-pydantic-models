@@ -2,11 +2,15 @@
 
 Messages produced and consumed by `ovos-audio` (the TTS and audio playback service).
 
+> **Note:** OCP/Common Play messages (media queries, playback control, player state) are documented separately in [ocp.md](ocp.md).
+
+---
+
 ## TTS — Speak
 
 ### `speak`
 
-The primary TTS request. Emitted by skills, handled by the audio service.
+The primary TTS request. Emitted by skills, handled by `ovos-audio`.
 
 ```python
 from ovos_pydantic_models.audio.playback import SpeakData, SpeakMessage
@@ -24,7 +28,7 @@ msg = SpeakMessage(data=SpeakData(utterance="Hello, world!", lang="en-us"))
 
 ### `speak:b64_audio`
 
-Request for base64 audio without playing it (useful for remote TTS).
+Request base64-encoded audio without playing it (useful for remote TTS clients).
 
 **`SpeakB64AudioData`**
 
@@ -68,7 +72,7 @@ msg = MycroftAudioQueueMessage(
 | `filename` | `str \| None` | `None` | Deprecated — use `uri` |
 | `binary_data` | `str \| None` | `None` | Hex-encoded audio bytes |
 | `audio_ext` | `str \| None` | `None` | Extension for binary data (e.g. `"wav"`) |
-| `viseme` | `list[tuple[float, str]] \| None` | `None` | `(timestamp, viseme)` for mouth animation |
+| `viseme` | `list \| None` | `None` | `(timestamp, viseme)` pairs for mouth animation |
 | `listen` | `bool` | `False` | Activate listener after playback |
 
 ### `mycroft.audio.play_sound`
@@ -86,9 +90,19 @@ Play a sound immediately (bypasses queue).
 
 ---
 
-## Audio Service Control
+## Speech Status
 
-These messages control the legacy audio service backend (e.g. for music playback via `ovos-audio`).
+| Message type | Class | Description |
+|---|---|---|
+| `mycroft.audio.speech.stop` | `MycroftSpeechStopMessage` | Stop current TTS speech |
+| `mycroft.audio.speak.status` | `MycroftAudioSpeakStatusMessage` | Request speaking status |
+| `mycroft.audio.is_speaking` | `MycroftAudioIsSpeakingMessage` | Reply: `speaking: bool` |
+
+---
+
+## Audio Service Control ↩ legacy
+
+> The `mycroft.audio.service.*` namespace is the **legacy** audio service backend (e.g. `mopidy`, VLC). It is being superseded by OCP (`ovos-media`) for media playback. New skills should use the OCP query protocol instead.
 
 ```python
 from ovos_pydantic_models.audio.audioservice import (
@@ -109,6 +123,12 @@ from ovos_pydantic_models.audio.audioservice import (
 | `mycroft.audio.service.seek_forward` | `AudioServiceSeekForwardMessage` | no |
 | `mycroft.audio.service.seek_backward` | `AudioServiceSeekBackwardMessage` | no |
 | `mycroft.audio.service.track_info` | `AudioServiceTrackInfoMessage` | no |
+| `ovos.audio.service.play` | `OvosAudioServicePlayMessage` | yes |
+| `ovos.audio.service.pause` | `OvosAudioServicePauseMessage` | no |
+| `ovos.audio.service.resume` | `OvosAudioServiceResumeMessage` | no |
+| `ovos.audio.service.stop` | `OvosAudioServiceStopMessage` | no |
+| `ovos.audio.service.next` | `OvosAudioServiceNextMessage` | no |
+| `ovos.audio.service.prev` | `OvosAudioServicePrevMessage` | no |
 
 **`AudioServicePlayData`**
 
@@ -120,35 +140,29 @@ from ovos_pydantic_models.audio.audioservice import (
 
 ---
 
-## Speech Status
+## OCP Audio Layer
 
-| Message type | Class | Description |
-|---|---|---|
-| `mycroft.audio.speech.stop` | `MycroftSpeechStopMessage` | Stop current TTS speech |
-| `mycroft.audio.speak.status` | `MycroftAudioSpeakStatusMessage` | Request speaking status |
-| `mycroft.audio.is_speaking` | `MycroftAudioIsSpeakingMessage` | Reply: `speaking: bool` |
-
----
-
-## OCP Media States
-
-`OcpMediaState` is an `IntEnum` matching Qt's `QMediaPlayer::MediaStatus` constants. Used by the OCP audio player.
+The `audio.ocp` module contains the low-level audio state signals used internally by the OCP player. These complement the higher-level OCP protocol (see [ocp.md](ocp.md)).
 
 ```python
 from ovos_pydantic_models.audio.ocp import OcpMediaState
-
-OcpMediaState.UNKNOWN         # 0
-OcpMediaState.NO_MEDIA        # 1
-OcpMediaState.LOADING_MEDIA   # 2
-OcpMediaState.LOADED_MEDIA    # 3
-OcpMediaState.STALLED_MEDIA   # 4
-OcpMediaState.BUFFERING_MEDIA # 5
-OcpMediaState.BUFFERED_MEDIA  # 6
-OcpMediaState.END_OF_MEDIA    # 7
-OcpMediaState.INVALID_MEDIA   # 8
 ```
 
-> Note: This is distinct from `skills/ocp.py::MediaState` (a str Enum for OCP player state: `PLAYING`, `PAUSED`, etc.). See [ocp.md](ocp.md).
+`OcpMediaState` is an `IntEnum` matching Qt's `QMediaPlayer::MediaStatus` constants:
+
+| Value | Int |
+|---|---|
+| `UNKNOWN` | 0 |
+| `NO_MEDIA` | 1 |
+| `LOADING_MEDIA` | 2 |
+| `LOADED_MEDIA` | 3 |
+| `STALLED_MEDIA` | 4 |
+| `BUFFERING_MEDIA` | 5 |
+| `BUFFERED_MEDIA` | 6 |
+| `END_OF_MEDIA` | 7 |
+| `INVALID_MEDIA` | 8 |
+
+> Distinct from `skills/ocp.py::MediaState` (str Enum for OCP player state: `PLAYING`, `PAUSED`, etc.). See [ocp.md](ocp.md).
 
 ---
 
@@ -156,7 +170,9 @@ OcpMediaState.INVALID_MEDIA   # 8
 
 ```python
 from ovos_pydantic_models.audio.opm import (
-    OvosLanguagesTtsMessage, OvosLanguagesTtsReplyData, OvosLanguagesTtsResponseMessage,
+    OvosLanguagesTtsMessage,
+    OvosLanguagesTtsReplyData,
+    OvosLanguagesTtsResponseMessage,
 )
 
 request = OvosLanguagesTtsMessage()

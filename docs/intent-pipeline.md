@@ -2,6 +2,8 @@
 
 Messages that flow through the intent service during utterance handling, converse, fallback, and stop.
 
+---
+
 ## Utterance Lifecycle
 
 | Message type | Class | Direction | Description |
@@ -9,6 +11,7 @@ Messages that flow through the intent service during utterance handling, convers
 | `ovos.utterance.handled` | `OvosUtteranceHandledMessage` | service → bus | Utterance successfully handled by a skill |
 | `ovos.utterance.cancelled` | `OvosUtteranceCancelledMessage` | service → bus | Utterance processing cancelled |
 | `complete_intent_failure` | `CompleteIntentFailureMessage` | service → bus | No intent matched after full pipeline |
+| `intent.service.pipelines.reload` | `IntentServicePipelinesReloadMessage` | bus → service | Reload/re-register pipeline plugins |
 
 ### `complete_intent_failure`
 
@@ -19,31 +22,6 @@ msg = CompleteIntentFailureMessage(
     data=CompleteIntentFailureData(utterance="what is blorg?", lang="en-us")
 )
 ```
-
-**`CompleteIntentFailureData`**
-
-| Field | Type | Required |
-|---|---|---|
-| `utterance` | `str` | yes |
-| `lang` | `str` | yes |
-
----
-
-## Conversational Context
-
-```python
-from ovos_pydantic_models.intents.core import (
-    AddContextData, AddContextMessage,
-    RemoveContextData, RemoveContextMessage,
-    ClearContextMessage,
-)
-```
-
-| Message type | Class | Key data fields |
-|---|---|---|
-| `add_context` | `AddContextMessage` | `context` (str), `word` (str\|None), `origin` (str\|None) |
-| `remove_context` | `RemoveContextMessage` | `context` (str) |
-| `clear_context` | `ClearContextMessage` | none |
 
 ---
 
@@ -74,9 +52,50 @@ request = IntentServiceIntentGetMessage(
 | Field | Type | Description |
 |---|---|---|
 | `intent_name` | `str` | Name of the matched intent |
-| `intent_service` | `str` | Pipeline stage that matched (e.g. `"adapt_high"`) |
+| `intent_service` | `str` | Pipeline stage that matched (e.g. `"adapt_high"`, `"padatious_high"`) |
 | `skill_id` | `str` | Owning skill |
 | `handler` | `str` | Handler function name |
+
+---
+
+## Skill Activate / Deactivate
+
+Dynamic message types that signal a skill's position on the converse stack.
+
+```python
+from ovos_pydantic_models.intents.core import (
+    SkillActivateData, SkillActivateMessage,
+    SkillDeactivateData, SkillDeactivateMessage,
+)
+
+activate_msg = SkillActivateMessage(
+    message_type="my-skill.activate",
+    data=SkillActivateData(),
+)
+deactivate_msg = SkillDeactivateMessage(message_type="my-skill.deactivate")
+```
+
+Open models (`extra='allow'`) — skills may include arbitrary extra data.
+
+---
+
+## Conversational Context ↩ legacy
+
+> These messages are **Adapt-specific**. Padacioso and other pipeline plugins do not use context in the same way.
+
+```python
+from ovos_pydantic_models.intents.core import (
+    AddContextData, AddContextMessage,
+    RemoveContextData, RemoveContextMessage,
+    ClearContextMessage,
+)
+```
+
+| Message type | Class | Key data fields |
+|---|---|---|
+| `add_context` | `AddContextMessage` | `context` (str), `word` (str\|None), `origin` (str\|None) |
+| `remove_context` | `RemoveContextMessage` | `context` (str) |
+| `clear_context` | `ClearContextMessage` | — |
 
 ---
 
@@ -107,7 +126,7 @@ from ovos_pydantic_models.intents.converse import (
 
 ### Enums
 
-**`ConverseMode`** — which skills are allowed to participate in converse:
+**`ConverseMode`** — which skills may participate:
 
 | Value | String |
 |---|---|
@@ -137,7 +156,7 @@ from ovos_pydantic_models.intents.converse import (
 
 ### Ping / Pong (service side)
 
-The intent service pings each active skill to see if it can handle the current utterance.
+The intent service pings each active skill to check if it can handle the utterance.
 
 | Message type | Class | Key fields |
 |---|---|---|
@@ -145,8 +164,6 @@ The intent service pings each active skill to see if it can handle the current u
 | `skill.converse.pong` | `SkillConversePongMessage` | `skill_id`, `can_handle: bool` |
 
 ### Request / Response (skill side)
-
-After confirming capability, the service sends the utterance to the skill.
 
 | Message type | Class | Key fields |
 |---|---|---|
@@ -163,11 +180,6 @@ Skills in `get_response()` expect the next utterance to go directly to them.
 |---|---|
 | `skill.converse.get_response.enable` | `SkillConverseGetResponseEnableMessage` |
 | `skill.converse.get_response.disable` | `SkillConverseGetResponseDisableMessage` |
-
-### Force Timeout
-
-| Message type | Class |
-|---|---|
 | `ovos.skills.converse.force_timeout` | `OvosSkillsConverseForceTimeoutMessage` |
 
 ---
@@ -207,8 +219,6 @@ from ovos_pydantic_models.intents.fallbacks import (
 
 ### Ping / Pong
 
-The service queries which fallback skills can handle the utterance within a priority range.
-
 **`OvosSkillsFallbackPingData`**
 
 | Field | Type | Default | Description |
@@ -246,7 +256,6 @@ from ovos_pydantic_models.intents.stop import (
     MycroftSkillsAbortQuestionData, MycroftSkillsAbortQuestionMessage,
     MycroftSkillsAbortExecutionData, MycroftSkillsAbortExecutionMessage,
     MycroftAudioSpeechStopData, MycroftAudioSpeechStopMessage,
-    OvosSkillsConverseForceTimeoutData, OvosSkillsConverseForceTimeoutMessage,
 )
 ```
 
@@ -266,32 +275,77 @@ from ovos_pydantic_models.intents.stop import (
 
 ---
 
-## Skill Activate / Deactivate (skill-side events)
+## Adapt Pipeline ↩ legacy
 
-These are dynamic message types emitted by skills to signal their own activation state.
+> **Legacy** — Adapt is the keyword-based intent engine, superseded by Padacioso and ML-based pipeline plugins. These messages are still handled by `ovos-adapt-pipeline-plugin` but new skills should use `@intent_file_handler` (Padacioso) instead.
 
 ```python
-from ovos_pydantic_models.intents.core import (
-    SkillActivateData, SkillActivateMessage,
-    SkillDeactivateData, SkillDeactivateMessage,
+from ovos_pydantic_models.intents.adapt import (
+    RegisterVocabData, RegisterVocabMessage,
+    RegisterIntentData, RegisterIntentMessage,
+    DetachIntentData, DetachIntentMessage,
+    DetachSkillData, DetachSkillMessage,
+    IntentServiceAdaptGetData, IntentServiceAdaptGetMessage,
+    IntentServiceAdaptReplyData, IntentServiceAdaptReplyMessage,
+    IntentServiceAdaptManifestGetMessage, IntentServiceAdaptManifestMessage,
+    IntentServiceAdaptVocabManifestGetMessage, IntentServiceAdaptVocabManifestMessage,
 )
-
-activate_msg = SkillActivateMessage(
-    message_type="my-skill.activate",
-    data=SkillActivateData(),
-)
-deactivate_msg = SkillDeactivateMessage(message_type="my-skill.deactivate")
 ```
 
-These are open models (`extra='allow'`) — skills may include arbitrary extra data.
+### Vocabulary & Intent Registration
+
+| Message type | Class | Key fields |
+|---|---|---|
+| `register_vocab` | `RegisterVocabMessage` | `entity_value`, `entity_type`, `regex`, `lang` |
+| `register_intent` | `RegisterIntentMessage` | `name`, `requires`, `at_least_one`, `optional`, `excludes` |
+| `detach_intent` | `DetachIntentMessage` | `intent_name` |
+| `detach_skill` | `DetachSkillMessage` | `skill_id` |
+
+### Introspection / Diagnostic
+
+| Message type | Class | Description |
+|---|---|---|
+| `intent.service.adapt.get` | `IntentServiceAdaptGetMessage` | Query Adapt for a single utterance |
+| `intent.service.adapt.reply` | `IntentServiceAdaptReplyMessage` | Reply with matched intent or `None` |
+| `intent.service.adapt.manifest.get` | `IntentServiceAdaptManifestGetMessage` | Request all registered Adapt intents |
+| `intent.service.adapt.manifest` | `IntentServiceAdaptManifestMessage` | Reply with list of intent parsers |
+| `intent.service.adapt.vocab.manifest.get` | `IntentServiceAdaptVocabManifestGetMessage` | Request all registered vocabulary |
+| `intent.service.adapt.vocab.manifest` | `IntentServiceAdaptVocabManifestMessage` | Reply with vocabulary entries |
 
 ---
 
-## Pipeline Reload
+## Padatious Pipeline ↩ legacy
+
+> **Legacy** — Padatious (ML intent matching) is superseded by Padacioso, which uses the same message protocol. These messages are still functional but Padacioso is preferred.
 
 ```python
-from ovos_pydantic_models.intents.core import IntentServicePipelinesReloadMessage
-
-msg = IntentServicePipelinesReloadMessage()
-# message_type = "intent.service.pipelines.reload"
+from ovos_pydantic_models.intents.padatious import (
+    PadatiousRegisterIntentData, PadatiousRegisterIntentMessage,
+    PadatiousRegisterEntityData, PadatiousRegisterEntityMessage,
+    MycroftSkillsTrainMessage, MycroftSkillsTrainedMessage,
+    IntentServicePadatiousGetData, IntentServicePadatiousGetMessage,
+    IntentServicePadatiousReplyData, IntentServicePadatiousReplyMessage,
+    IntentServicePadatiousManifestGetMessage, IntentServicePadatiousManifestMessage,
+    IntentServicePadatiousEntitiesManifestGetMessage, IntentServicePadatiousEntitiesManifestMessage,
+)
 ```
+
+### Registration
+
+| Message type | Class | Key fields |
+|---|---|---|
+| `padatious:register_intent` | `PadatiousRegisterIntentMessage` | `skill_id`, `name`, `file_name \| samples`, `lang` |
+| `padatious:register_entity` | `PadatiousRegisterEntityMessage` | `skill_id`, `name`, `file_name \| samples`, `lang` |
+| `mycroft.skills.train` | `MycroftSkillsTrainMessage` | — (trigger retraining) |
+| `mycroft.skills.trained` | `MycroftSkillsTrainedMessage` | — (training complete) |
+
+### Introspection / Diagnostic
+
+| Message type | Class | Description |
+|---|---|---|
+| `intent.service.padatious.get` | `IntentServicePadatiousGetMessage` | Query Padatious for a single utterance |
+| `intent.service.padatious.reply` | `IntentServicePadatiousReplyMessage` | Reply with matched intent or `None` |
+| `intent.service.padatious.manifest.get` | `IntentServicePadatiousManifestGetMessage` | Request all registered intent names |
+| `intent.service.padatious.manifest` | `IntentServicePadatiousManifestMessage` | Reply with `intents: list[str]` |
+| `intent.service.padatious.entities.manifest.get` | `IntentServicePadatiousEntitiesManifestGetMessage` | Request all registered entities |
+| `intent.service.padatious.entities.manifest` | `IntentServicePadatiousEntitiesManifestMessage` | Reply with entity list |
