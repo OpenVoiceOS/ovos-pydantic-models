@@ -131,6 +131,17 @@ class AudioServiceTrackInfoReplyData(BaseModel, extra='allow'):
     """
 
 
+class AudioServiceTrackInfoMessage(OpenVoiceOSMessage):
+    """Request metadata for the currently playing track.
+
+    Emitted by the OCP bus API or skills that need to display or log
+    now-playing information. `ovos-audio` replies with
+    `mycroft.audio.service.track_info_reply`.
+    """
+    message_type: str = "mycroft.audio.service.track_info"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
 class AudioServiceTrackInfoReplyMessage(OpenVoiceOSMessage):
     """Return metadata for the currently playing track.
 

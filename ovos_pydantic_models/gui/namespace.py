@@ -201,3 +201,19 @@ class MycroftGuiScreenCloseMessage(OpenVoiceOSMessage):
     """
     message_type: str = "mycroft.gui.screen.close"
     data: MycroftGuiScreenCloseData
+
+
+class MycroftGuiConnectedData(BaseModel):
+    """Payload sent by a GUI client when it opens a connection to the GUI service."""
+    gui_id: str = Field(..., description="Unique identifier for the connecting GUI client instance.")
+
+
+class MycroftGuiConnectedMessage(OpenVoiceOSMessage):
+    """Signal that a GUI client has connected to the OVOS GUI service.
+
+    Emitted by the GUI WebSocket client (e.g. Qt/Kirigami frontend) immediately
+    after establishing its connection. The GUI service uses `gui_id` to track
+    which client is connected and route namespace updates accordingly.
+    """
+    message_type: str = "mycroft.gui.connected"
+    data: MycroftGuiConnectedData

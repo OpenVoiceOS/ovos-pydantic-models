@@ -555,3 +555,41 @@ class EnclosureActiveSkillMessage(OpenVoiceOSMessage):
     """
     message_type: str = "enclosure.active_skill"
     data: EnclosureActiveSkillData
+
+
+class MycroftEyesDefaultMessage(OpenVoiceOSMessage):
+    """Reset the Mark 1 eye LEDs to the default 'awake' eye pattern.
+
+    Emitted by the mark1-ctrl skill or the system after speech or animations
+    to restore the enclosure eyes to the neutral idle state. The Mark 1 PHAL
+    plugin renders the standard eye bitmap on the LED matrix.
+    """
+    message_type: str = "mycroft.eyes.default"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosMk1DisplayTextData(BaseModel):
+    """Text payload for Mark 1 faceplate display."""
+    text: str = Field(..., description="Text to display on the Mark 1 LED faceplate (typically 4 characters).")
+
+
+class OvosMk1DisplayDateMessage(OpenVoiceOSMessage):
+    """Send the current date string to the Mark 1 faceplate.
+
+    Emitted by the date-time skill to show the current date on the Mark 1
+    mouth LED matrix. The Mark 1 PHAL plugin scrolls or truncates the text
+    to fit the 4-character display width.
+    """
+    message_type: str = "ovos.mk1.display_date"
+    data: OvosMk1DisplayTextData
+
+
+class OvosMk1DisplayTimeMessage(OpenVoiceOSMessage):
+    """Send the current time string to the Mark 1 faceplate.
+
+    Emitted by the date-time skill to show the current time on the Mark 1
+    mouth LED matrix. The Mark 1 PHAL plugin renders the time in HH:MM format
+    on the 4-character display.
+    """
+    message_type: str = "ovos.mk1.display_time"
+    data: OvosMk1DisplayTextData

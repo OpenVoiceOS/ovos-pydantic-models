@@ -565,6 +565,17 @@ class OvosCommonPlayStopResponseMessage(OpenVoiceOSMessage):
     data: OvosCommonPlayStopResponseData
 
 
+class OvosCommonPlayResetMessage(OpenVoiceOSMessage):
+    """Reset the OCP player to its initial idle state.
+
+    Emitted by the OCP pipeline plugin when a media search completes with no
+    results, or when the player needs to be cleared without a full stop cycle.
+    Clears the current queue, resets playback state, and returns OCP to idle.
+    """
+    message_type: str = "ovos.common_play.reset"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
 class OvosCommonPlayNextMessage(OpenVoiceOSMessage):
     """Skip to the next track in the OCP queue.
 

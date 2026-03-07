@@ -257,3 +257,28 @@ class SystemWifiSetupMessage(OpenVoiceOSMessage):
     """
     message_type: str = "system.wifi.setup"
     data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class SystemFactoryResetStartMessage(OpenVoiceOSMessage):
+    """Signal that a factory reset sequence has begun.
+
+    Emitted by the system PHAL plugin immediately after receiving
+    `system.factory.reset`, before any data is wiped. Components that
+    need to perform cleanup or show a 'resetting…' UI can subscribe here.
+    The data payload is forwarded from the original reset request and may
+    contain flags such as `wipe_cache`, `wipe_data`, `wipe_configs`.
+    """
+    message_type: str = "system.factory.reset.start"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class SystemFactoryResetCompleteMessage(OpenVoiceOSMessage):
+    """Signal that the factory reset process has finished.
+
+    Emitted by the system PHAL plugin after all data has been wiped and
+    all registered component callbacks have completed. The device will
+    typically reboot immediately after this event unless `reboot=False`
+    was passed in the original reset request.
+    """
+    message_type: str = "system.factory.reset.complete"
+    data: Dict[str, Any] = Field(default_factory=dict)

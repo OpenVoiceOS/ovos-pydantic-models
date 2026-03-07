@@ -113,3 +113,42 @@ class MycroftVolumeMuteMessage(OpenVoiceOSMessage):
     """
     message_type: str = "mycroft.volume.mute"
     data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class MycroftVolumeMuteToggleMessage(OpenVoiceOSMessage):
+    """Toggle the mute state — mute if currently unmuted, unmute if muted.
+
+    Emitted by hardware mute buttons, media key bindings, or GUI controls
+    that act as a single toggle. The PHAL volume plugin flips the current
+    mute state and restores the previous volume level when unmuting.
+    """
+    message_type: str = "mycroft.volume.mute.toggle"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class MycroftVolumeSetGuiData(BaseModel):
+    """Payload for a GUI-initiated volume change."""
+    percent: int = Field(..., ge=0, le=100, description="Target volume level (0–100).")
+
+
+class MycroftVolumeSetGuiMessage(OpenVoiceOSMessage):
+    """Set the system volume from a GUI slider or on-screen control.
+
+    Functionally identical to `mycroft.volume.set` but emitted specifically
+    by GUI volume sliders rather than voice commands. The PHAL volume plugin
+    applies the new level without triggering any verbal confirmation or OSD,
+    since the user is already interacting with the GUI.
+    """
+    message_type: str = "mycroft.volume.set.gui"
+    data: MycroftVolumeSetGuiData
+
+
+class MycroftVolumeGetSlidingPanelMessage(OpenVoiceOSMessage):
+    """Request the current volume level when the GUI sliding panel opens.
+
+    Emitted by the GUI sliding volume panel on open to ensure the slider
+    reflects the current hardware volume before the user drags it.
+    The PHAL volume plugin responds with `mycroft.volume.get.response`.
+    """
+    message_type: str = "mycroft.volume.get.sliding.panel"
+    data: Dict[str, Any] = Field(default_factory=dict)

@@ -242,3 +242,15 @@ class OvosWallpaperManagerLoadedMessage(OpenVoiceOSMessage):
     """
     message_type: str = "ovos.wallpaper.manager.loaded"
     data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosPhalWallpaperManagerProviderRegisteredMessage(OpenVoiceOSMessage):
+    """Signal that a wallpaper provider plugin has successfully registered.
+
+    Emitted by the wallpaper manager PHAL plugin after a provider calls
+    `ovos.wallpaper.manager.register.provider` and the manager has verified
+    and stored the registration. The provider can now receive
+    `ovos.wallpaper.manager.get.collection.from.provider` requests.
+    """
+    message_type: str = "ovos.phal.wallpaper.manager.provider.registered"
+    data: Dict[str, Any] = Field(default_factory=dict)

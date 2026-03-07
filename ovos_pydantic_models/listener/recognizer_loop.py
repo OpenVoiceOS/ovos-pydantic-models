@@ -351,4 +351,28 @@ class MycroftMicListenMessage(OpenVoiceOSMessage):
     data: Dict[str, Any] = Field(default_factory=dict)
 
 
+class RecognizerLoopUtteranceStartMessage(OpenVoiceOSMessage):
+    """Signal that a synthesized TTS utterance has started playing.
+
+    Emitted by `ovos-audio` when it begins playing a TTS audio chunk,
+    forwarding the original `mycroft.audio.queue` data. GUI tray indicators
+    and state managers use this to distinguish active speech playback from
+    microphone recording.
+    """
+    message_type: str = "recognizer_loop:utterance_start"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class RecognizerLoopRecognitionUnknownMessage(OpenVoiceOSMessage):
+    """Signal that speech was detected but could not be transcribed.
+
+    Emitted by `ovos-dinkum-listener` when the STT engine returns an empty
+    or invalid transcription (e.g. noise, unintelligible speech, or a
+    STT engine error). GUI components and system tray indicators use this
+    to show a 'not understood' state without triggering intent processing.
+    """
+    message_type: str = "recognizer_loop:recognition_unknown"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
 # --- Example Usage ---

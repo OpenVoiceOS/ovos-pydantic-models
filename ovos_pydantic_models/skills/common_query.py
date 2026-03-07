@@ -119,3 +119,59 @@ class QuestionQueryResponseMessage(OpenVoiceOSMessage):
     """
     message_type: str = "question:query.response"
     data: QuestionQueryResponseData
+
+
+class CommonQueryQuestionData(BaseModel):
+    """Payload for a common-query pipeline question dispatch."""
+    utterance: str = Field(..., description="The user's utterance to answer.")
+
+
+class CommonQueryQuestionMessage(OpenVoiceOSMessage):
+    """Dispatch a user utterance to all registered common-query skills.
+
+    Emitted by the common-query pipeline plugin (`ovos-common-query-pipeline-plugin`)
+    after classifying the utterance as a factual question. All skills that
+    registered via `ovos.common_query.pong` receive this message and respond
+    with `question:query.response`. The pipeline collects responses and selects
+    the highest-confidence answer.
+    """
+    message_type: str = "common_query.question"
+    data: CommonQueryQuestionData
+
+
+class PlayQueryData(BaseModel):
+    """Payload for a legacy Common Play System media query."""
+    phrase: str = Field(..., description="Media search phrase from the user utterance.")
+
+
+class PlayQueryMessage(OpenVoiceOSMessage):
+    """Query all legacy CommonPlaySkills for a media match.
+
+    **Legacy** — superseded by the OCP query protocol (`ovos.common_play.query`).
+    Emitted by `ocp-pipeline-plugin` compatibility layer to support skills that
+    still inherit from the Mycroft `CommonPlaySkill` base class. Skills respond
+    with `play:query.response`.
+    """
+    message_type: str = "play:query"
+    data: PlayQueryData
+
+
+class PlayQueryResponseData(BaseModel):
+    """Response from a legacy CommonPlaySkill to a play:query."""
+    phrase: str = Field(..., description="Original search phrase.")
+    skill_id: str = Field(..., description="ID of the responding skill.")
+    conf: float = Field(..., ge=0.0, le=1.0, description="Match confidence (0.0–1.0).")
+    callback_data: Dict[str, Any] = Field(default_factory=dict,
+                                           description="Data the skill needs back at play:start time.")
+    searching: bool = Field(False, description="True if the skill is still searching (intermediate response).")
+
+
+class PlayQueryResponseMessage(OpenVoiceOSMessage):
+    """Response from a legacy CommonPlaySkill to a play:query.
+
+    **Legacy** — part of the Mycroft Common Play System, superseded by OCP.
+    Emitted by skills inheriting from `CommonPlaySkill` in response to
+    `play:query`. The OCP pipeline selects the highest-confidence response.
+    """
+    message_type: str = "play:query.response"
+    data: PlayQueryResponseData

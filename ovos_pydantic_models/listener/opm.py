@@ -139,3 +139,43 @@ class OpmVadQueryResponseMessage(OpenVoiceOSMessage):
     """
     message_type: str = "opm.vad.query.response"
     data: OpmVadQueryReplyData
+
+
+class OpmMicrophoneQueryMessage(OpenVoiceOSMessage):
+    """Query the Plugin Manager for all installed Microphone plugins.
+
+    Emitted by settings GUIs or configuration tools that need to list
+    available audio input sources. The listener (or OPM directly) replies
+    with `opm.microphone.response`. Microphone plugins are language-agnostic
+    so the response does not include a language list.
+
+    Message type matches ``PluginTypes.MIC = "opm.microphone"`` in
+    `ovos-plugin-manager`.
+    """
+    message_type: str = "opm.microphone"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OpmMicrophoneQueryReplyData(BaseModel):
+    """Microphone plugin inventory returned by the Plugin Manager."""
+    plugins: List[str] = Field(
+        ..., description="List of installed microphone plugin names."
+    )
+    configs: Dict[str, Dict[str, Any]] = Field(
+        ..., description="Dictionary mapping plugin name to its configuration options."
+    )
+    options: Dict[str, List[Dict[str, Any]]] = Field(
+        default_factory=dict,
+        description="Dictionary mapping plugin name to list of UI-friendly config options."
+    )
+
+
+class OpmMicrophoneQueryResponseMessage(OpenVoiceOSMessage):
+    """Return the full Microphone plugin inventory from the Plugin Manager.
+
+    Emitted in response to `opm.microphone`. Includes all installed microphone
+    plugins and their configuration schemas. Unlike STT/WW/VAD, microphone
+    plugins are not language-specific so no ``langs`` field is included.
+    """
+    message_type: str = "opm.microphone.response"
+    data: OpmMicrophoneQueryReplyData
