@@ -183,3 +183,21 @@ class GuiStatusRequestMessage(OpenVoiceOSMessage):
     """
     message_type: str = "gui.status.request"
     data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class MycroftGuiScreenCloseData(BaseModel):
+    """Payload for requesting the GUI to close a skill's screen."""
+    skill_id: str = Field(..., description="ID of the skill whose screen should be closed.")
+
+
+class MycroftGuiScreenCloseMessage(OpenVoiceOSMessage):
+    """Request the GUI service to close the active screen for a skill.
+
+    Emitted by skills via `self.gui.release()` when they are done displaying
+    content and want to return control to the previous page or homescreen.
+    The GUI service removes the skill's namespace from the display stack and
+    shows the next item in the queue, or returns to the homescreen if the
+    queue is empty.
+    """
+    message_type: str = "mycroft.gui.screen.close"
+    data: MycroftGuiScreenCloseData

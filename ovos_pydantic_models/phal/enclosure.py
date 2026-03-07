@@ -457,3 +457,101 @@ class EnclosureSystemUnmuteMessage(OpenVoiceOSMessage):
     """
     message_type: str = "enclosure.system.unmute"
     data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class EnclosureSystemBlinkData(BaseModel):
+    """Payload for making the Mark 1 eyes blink a fixed number of times."""
+    times: int = Field(..., description="Number of times to blink the eyes.")
+
+
+class EnclosureSystemBlinkMessage(OpenVoiceOSMessage):
+    """Make the Mark 1 eyes blink a given number of times.
+
+    Emitted by skills via `self.enclosure.system_blink(times)`. The Mark 1
+    PHAL plugin interprets this as a short on/off animation of the LED eye
+    ring. Typically used for acknowledgement feedback (e.g. 'got it').
+    """
+    message_type: str = "enclosure.system.blink"
+    data: EnclosureSystemBlinkData
+
+
+class EnclosureEyesRgbGetMessage(OpenVoiceOSMessage):
+    """Request the current RGB color of all Mark 1 eye pixels.
+
+    Emitted by skills via `self.enclosure.get_eyes_color()`. The Mark 1
+    PHAL plugin responds with `enclosure.eyes.rgb` containing the current
+    pixel colors as a list of (r, g, b) tuples.
+    """
+    message_type: str = "enclosure.eyes.rgb.get"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class EnclosureEyesRgbData(BaseModel):
+    """Current RGB pixel values for all Mark 1 eye LEDs."""
+    pixels: List[Any] = Field(..., description="List of (r, g, b) tuples, one per eye pixel (24 total).")
+
+
+class EnclosureEyesRgbMessage(OpenVoiceOSMessage):
+    """Return the current RGB color of all Mark 1 eye pixels.
+
+    Emitted by the Mark 1 PHAL plugin in response to `enclosure.eyes.rgb.get`.
+    `pixels` is a list of 24 (r, g, b) tuples representing the current LED
+    state. Skills use this to read eye color before modifying it.
+    """
+    message_type: str = "enclosure.eyes.rgb"
+    data: EnclosureEyesRgbData
+
+
+class EnclosureMouthDisplayImageData(BaseModel):
+    """Payload for displaying a bitmap image on the Mark 1 mouth faceplate."""
+    img_path: str = Field(..., description="Absolute path to the image file to display.")
+    xOffset: int = Field(0, description="Horizontal offset in pixels.")
+    yOffset: int = Field(0, description="Vertical offset in pixels.")
+    invert: bool = Field(False, description="If True, invert the image colors before displaying.")
+    clearPrev: bool = Field(True, description="If True, clear the faceplate before drawing the new image.")
+
+
+class EnclosureMouthDisplayImageMessage(OpenVoiceOSMessage):
+    """Display a bitmap image on the Mark 1 mouth faceplate.
+
+    Emitted by skills via `self.enclosure.mouth_display_image()`. The Mark 1
+    PHAL plugin loads the image from `img_path` and renders it on the LED
+    faceplate grid. Multiple images can be composited by setting
+    `clearPrev=False`.
+    """
+    message_type: str = "enclosure.mouth.display_image"
+    data: EnclosureMouthDisplayImageData
+
+
+class EnclosureWeatherDisplayData(BaseModel):
+    """Payload for showing a weather icon and temperature on the Mark 1 faceplate."""
+    img_code: str = Field(..., description="Weather icon code: '0'=sunny, '1'=partly cloudy, '2'=cloudy, '3'=light rain, '4'=rain, '5'=storm, '6'=snow, '7'=wind/mist.")
+    temp: int = Field(..., description="Temperature value to display (unit not specified — caller determines C or F).")
+
+
+class EnclosureWeatherDisplayMessage(OpenVoiceOSMessage):
+    """Show a weather icon and temperature reading on the Mark 1 mouth faceplate.
+
+    Emitted by weather skills via `self.enclosure.weather_display()`. The Mark 1
+    PHAL plugin renders the appropriate weather icon bitmap alongside the
+    temperature value on the LED faceplate.
+    """
+    message_type: str = "enclosure.weather.display"
+    data: EnclosureWeatherDisplayData
+
+
+class EnclosureActiveSkillData(BaseModel):
+    """Payload identifying the currently active skill on the enclosure."""
+    skill_id: str = Field(..., description="ID of the skill currently registered as active.")
+
+
+class EnclosureActiveSkillMessage(OpenVoiceOSMessage):
+    """Register a skill as the currently active skill on the enclosure.
+
+    **Deprecated** — unused in current OVOS. Originally emitted by skills
+    via `self.enclosure.register()` to 'claim' the enclosure display during
+    `speak()` and `speak_dialog()`. The Mark 1 PHAL plugin no longer tracks
+    this. Documented for historical reference.
+    """
+    message_type: str = "enclosure.active_skill"
+    data: EnclosureActiveSkillData

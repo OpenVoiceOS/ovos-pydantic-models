@@ -32,11 +32,12 @@ from ovos_pydantic_models.message import OpenVoiceOSMessage
 SUBSYSTEM_MAP = {
     "audio.playback":           ("Audio",    "Playback / TTS"),
     "audio.audioservice":       ("Audio",    "Audio Service"),
-    "audio.ocp":                ("Audio",    "OCP Layer"),
     "audio.opm":                ("Audio",    "OPM Queries"),
     "audio.recognizer_loop":    ("Audio",    "Recognizer Loop"),
-    "audio.video_service":      ("Audio",    "Video Service"),
-    "audio.web_service":        ("Audio",    "Web Service"),
+    "audio.ocp":                ("OCP",      "Core Protocol"),
+    "audio.video_service":      ("OCP",      "Video Service"),
+    "audio.web_service":        ("OCP",      "Web Service"),
+    "skills.ocp":               ("OCP",      "Skill API"),
     "listener.recognizer_loop": ("Listener", "Recognizer Loop"),
     "listener.opm":             ("Listener", "OPM Queries"),
     "intents.core":             ("Intents",  "Core / Context"),
@@ -45,7 +46,6 @@ SUBSYSTEM_MAP = {
     "intents.stop":             ("Intents",  "Stop"),
     "intents.adapt":            ("Intents",  "Adapt"),
     "intents.padatious":        ("Intents",  "Padatious"),
-    "skills.ocp":               ("Skills",   "OCP / Common Play"),
     "skills.common_query":      ("Skills",   "Common Query"),
     "skills.game":              ("Skills",   "Game"),
     "skills.converse":          ("Skills",   "Converse"),
@@ -112,7 +112,7 @@ BETA_SUBSYSTEMS = {
     "audio.web_service",
 }
 
-CATEGORY_ORDER = ["Audio", "Listener", "Intents", "Skills", "Core", "GUI", "PHAL", "Other"]
+CATEGORY_ORDER = ["Audio", "OCP", "Listener", "Intents", "Skills", "Core", "GUI", "PHAL", "Other"]
 
 
 # ---------------------------------------------------------------------------
@@ -368,6 +368,7 @@ body {
   --accent: #58a6ff;
   --radius: 8px;
   --cat-audio:    #a78bfa;
+  --cat-ocp:      #f43f5e;
   --cat-listener: #60a5fa;
   --cat-intents:  #34d399;
   --cat-skills:   #fb923c;
@@ -823,6 +824,7 @@ const LEGACY_SUBSYSTEMS = new Set(__LEGACY_SUBSYSTEMS__);
 // ---- Category config ----
 const CAT_COLORS = {
   Audio:    '#a78bfa',
+  OCP:      '#f43f5e',
   Listener: '#60a5fa',
   Intents:  '#34d399',
   Skills:   '#fb923c',
@@ -859,7 +861,7 @@ function buildSidebar() {
     subs[m.subsystem] = (subs[m.subsystem] || 0) + 1;
   });
 
-  const catOrder = ['Audio','Listener','Intents','Skills','Core','GUI','PHAL','Other'];
+  const catOrder = ['Audio','OCP','Listener','Intents','Skills','Core','GUI','PHAL','Other'];
   let html = '';
 
   catOrder.forEach(cat => {
