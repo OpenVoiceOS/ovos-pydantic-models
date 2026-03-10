@@ -14,6 +14,8 @@ authors = [
 ]
 dependencies = [
     "pydantic>=2.0.0,<3.0.0",
+    "fastapi",
+    "uvicorn",
 ]
 
 [project.urls]
@@ -21,10 +23,6 @@ Homepage = "https://github.com/OpenVoiceOS/ovos-pydantic-models"
 Repository = "https://github.com/OpenVoiceOS/ovos-pydantic-models"
 
 [project.optional-dependencies]
-fastapi = [
-    "fastapi",
-    "uvicorn",
-]
 dev = [
     "pytest",
 ]
