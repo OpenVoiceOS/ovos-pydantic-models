@@ -1,4 +1,4 @@
-Last Edit: Claude Opus 4.6 - 2026-03-10 - Motive: Added GitHub workflows Q&A.
+Last Edit: Claude Haiku 4.5 - 2026-03-10 - Motive: Standardized workflows to gh-automations reusables.
 
 # FAQ — `ovos-pydantic-models`
 
@@ -34,9 +34,11 @@ See `QUICK_FACTS.md` — currently `>=3.10`.
 ## What GitHub workflows are available?
 - `release_workflow.yml` — On PR merge to `dev` (or manual dispatch): bumps alpha version, publishes to PyPI, opens release PR to master, notifies Matrix.
 - `publish_stable.yml` — On push to `master` (or manual dispatch): publishes stable release to PyPI, tags, syncs master→dev. Has bot-safety guard.
-- `license_tests.yml` — License compliance check on PRs to dev and pushes to master.
-- `unit_tests.yml` — Runs pytest on Python 3.10 and 3.11.
-- `pipaudit.yml` — Dependency vulnerability scan on dev/master pushes.
+- `license_tests.yml` — License compliance check on PRs to dev and pushes to master (uses reusable `license-check.yml`).
+- `unit_tests.yml` — Runs pytest on Python 3.10, 3.11, and 3.12 (uses reusable `build-tests.yml`).
+- `pipaudit.yml` — Dependency vulnerability scan on dev/master pushes (uses reusable `pip-audit.yml`).
+- `release_preview.yml` — Preview version bump on PRs to `dev` (uses reusable `release-preview.yml`).
+- `repo_health.yml` — Health checks on PRs to `dev` (uses reusable `repo-health.yml`).
 - `conventional-label.yaml` — Auto-labels PRs based on conventional commit titles.
 - `docs_site.yml` — Builds and deploys documentation site to GitHub Pages.
 

@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ovos-pydantic-models"
+dynamic = ["version"]
+description = "Pydantic models for OpenVoiceOS MessageBus messages — the typed protocol reference."
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.10"
+authors = [
+    {name = "OpenVoiceOS", email = "support@openvoiceos.org"}
+]
+dependencies = [
+    "pydantic>=2.0.0,<3.0.0",
+    "fastapi",
+    "uvicorn",
+]
+
+[project.urls]
+Homepage = "https://github.com/OpenVoiceOS/ovos-pydantic-models"
+Repository = "https://github.com/OpenVoiceOS/ovos-pydantic-models"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["ovos_pydantic_models*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "ovos_pydantic_models.version.__version__"}

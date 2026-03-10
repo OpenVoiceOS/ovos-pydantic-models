@@ -1,4 +1,5 @@
 # Base message types
+from ovos_pydantic_models.version import __version__
 from ovos_pydantic_models.message import OpenVoiceOSMessage, MessageContext
 from ovos_pydantic_models.session import Session, UtteranceState, IntentContextManager, IntentContextManagerFrame, ContextEntity
 
