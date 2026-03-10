@@ -1,3 +1,5 @@
+Last Edit: Claude Sonnet 4.6 - 2026-03-08 - Motive: Added mandatory Last Edit header per AGENTS.md.
+
 # ovos-pydantic-models Documentation
 
 > **Beta** — Message models are semi-automatically generated and under active review. Some subsystems are deprecated but documented here for historical reference. Do not treat this as a stable API contract.
