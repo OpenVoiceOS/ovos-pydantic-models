@@ -24,4 +24,6 @@ jobs:
     if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     needs: publish_alpha
     uses: OpenVoiceOS/gh-automations/.github/workflows/notify-matrix.yml@dev
+    with:
+      message: "ovos-pydantic-models alpha published"
     secrets: inherit
