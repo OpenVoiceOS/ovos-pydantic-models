@@ -10,9 +10,10 @@ from ovos_pydantic_models.core.skill_manager import (
     MycroftSkillsErrorData, MycroftSkillsErrorMessage,
 )
 from ovos_pydantic_models.core.session import (
-    OvosSessionSyncMessage,
+    OvosSessionSyncMessage, OvosSessionSyncData,
     OvosSessionUpdateDefaultData, OvosSessionUpdateDefaultMessage,
 )
+from ovos_pydantic_models.session import Session
 from ovos_pydantic_models.core.skill_settings import (
     SkillSettingsChangeData, SkillSettingsChangeMessage,
     OvosSkillsSettingsChangedData, OvosSkillsSettingsChangedMessage,
@@ -79,8 +80,18 @@ class TestSkillManagerMessages:
 
 class TestSessionMessages:
     def test_session_sync(self):
-        msg = OvosSessionSyncMessage()
+        # SESSION-2 §2.7: the updated snapshot travels in data.session
+        session = Session(session_id="sat-1", lang="pt-pt")
+        msg = OvosSessionSyncMessage(data=OvosSessionSyncData(session=session))
         assert msg.message_type == "ovos.session.sync"
+        assert msg.data.session.session_id == "sat-1"
+        assert msg.data.session.lang == "pt-pt"
+
+    def test_session_sync_roundtrip(self):
+        session = Session(session_id="default", lang="en-us")
+        msg = OvosSessionSyncMessage(data=OvosSessionSyncData(session=session))
+        restored = OvosSessionSyncMessage.model_validate(msg.model_dump())
+        assert restored.data.session.lang == "en-us"
 
     def test_session_update_default(self):
         session = Session(session_id="default", lang="es-es")
