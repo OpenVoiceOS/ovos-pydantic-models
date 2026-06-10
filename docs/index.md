@@ -14,7 +14,8 @@ Typed Pydantic v2 models for every message that flows over the OVOS MessageBus. 
 | [listener.md](listener.md) | Recognizer loop, wake word, mic control, OPM queries |
 | [audio.md](audio.md) | TTS speak, audio queue, legacy audio service, OPM queries |
 | [ocp.md](ocp.md) | OCP/Common Play — query protocol, playback control, media data models, enums |
-| [intent-pipeline.md](intent-pipeline.md) | Converse, fallback, stop, context management; Adapt and Padatious (legacy) |
+| [intent-pipeline.md](intent-pipeline.md) | Utterance lifecycle (PIPELINE-1), converse, fallback, stop, context management; Adapt and Padatious (legacy) |
+| [phal-tools.md](phal-tools.md) | PHAL plugin tools — `ovos.tools.*` bus surface |
 | [skill-manager.md](skill-manager.md) | Skill lifecycle, settings, installer, session sync |
 | [missing-messages.md](missing-messages.md) | Tracking doc: modeled vs still missing |
 

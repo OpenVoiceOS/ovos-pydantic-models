@@ -4,14 +4,23 @@ Messages that flow through the intent service during utterance handling, convers
 
 ---
 
-## Utterance Lifecycle
+## Utterance Lifecycle (PIPELINE-1)
 
-| Message type | Class | Direction | Description |
-|---|---|---|---|
-| `ovos.utterance.handled` | `OvosUtteranceHandledMessage` | service → bus | Utterance successfully handled by a skill |
-| `ovos.utterance.cancelled` | `OvosUtteranceCancelledMessage` | service → bus | Utterance processing cancelled |
-| `complete_intent_failure` | `CompleteIntentFailureMessage` | service → bus | No intent matched after full pipeline |
-| `intent.service.pipelines.reload` | `IntentServicePipelinesReloadMessage` | bus → service | Reload/re-register pipeline plugins |
+Full coverage of the utterance lifecycle bus surface defined in OVOS-PIPELINE-1.
+
+| Message type | Class | Direction | Spec ref | Description |
+|---|---|---|---|---|
+| `ovos.utterance.handle` | `OvosUtteranceHandleMessage` | producer → orchestrator | PIPELINE-1 §9.1 | Feed an utterance into the pipeline (entry point) |
+| `ovos.intent.matched` | `OvosIntentMatchedMessage` | orchestrator → bus | PIPELINE-1 §9.2 | A plugin claimed the utterance (notification, before dispatch) |
+| `ovos.intent.unmatched` | `OvosIntentUnmatchedMessage` | orchestrator → bus | PIPELINE-1 §9.3 | No plugin claimed the utterance |
+| `ovos.intent.handler.start` | `OvosIntentHandlerStartMessage` | orchestrator → bus | PIPELINE-1 §8 | Handler is about to be invoked |
+| `ovos.intent.handler.complete` | `OvosIntentHandlerCompleteMessage` | orchestrator → bus | PIPELINE-1 §8 | Handler returned normally |
+| `ovos.intent.handler.error` | `OvosIntentHandlerErrorMessage` | orchestrator → bus | PIPELINE-1 §8 | Handler raised an exception |
+| `ovos.utterance.speak` | `OvosUtteranceSpeakMessage` | handler → output stage | PIPELINE-1 §9.6 | Natural-language response (output exit point) |
+| `ovos.utterance.handled` | `OvosUtteranceHandledMessage` | orchestrator → bus | PIPELINE-1 §9.5 | Utterance lifecycle complete (exactly once per handle) |
+| `ovos.utterance.cancelled` | `OvosUtteranceCancelledMessage` | orchestrator → bus | PIPELINE-1 §9.5 | Utterance cancelled before completion |
+| `complete_intent_failure` | `CompleteIntentFailureMessage` | service → bus | — | No intent matched after full pipeline (legacy) |
+| `intent.service.pipelines.reload` | `IntentServicePipelinesReloadMessage` | bus → service | — | Reload/re-register pipeline plugins |
 
 ### `complete_intent_failure`
 
@@ -241,6 +250,63 @@ from ovos_pydantic_models.intents.fallbacks import (
 | `ovos.skills.fallback.{skill_id}.response` | `OvosSkillsFallbackResponseMessage` | `result: bool`, `fallback_handler \| None` |
 | `ovos.skills.fallback.{skill_id}.killed` | `OvosSkillsFallbackKilledMessage` | `error: str` |
 | `ovos.skills.fallback.force_timeout` | `OvosSkillsFallbackForceTimeoutMessage` | `skill_id` |
+
+---
+
+## PIPELINE-1 spec messages — usage examples
+
+```python
+from ovos_pydantic_models.intents.core import (
+    # Entry point
+    OvosUtteranceHandleData, OvosUtteranceHandleMessage,
+    # Match notification
+    OvosIntentMatchedData, OvosIntentMatchedMessage,
+    # No-match
+    OvosIntentUnmatchedMessage,
+    # Handler lifecycle trio
+    OvosIntentHandlerStartData, OvosIntentHandlerStartMessage,
+    OvosIntentHandlerCompleteData, OvosIntentHandlerCompleteMessage,
+    OvosIntentHandlerErrorData, OvosIntentHandlerErrorMessage,
+    # Output exit point
+    OvosUtteranceSpeakData, OvosUtteranceSpeakMessage,
+    # STOP-1 spec bus surface
+    OvosStopPingMessage,
+    OvosStopPongData, OvosStopPongMessage,
+    OvosStopMessage,
+)
+
+# --- utterance entry (PIPELINE-1 §9.1) ---
+entry = OvosUtteranceHandleMessage(
+    data=OvosUtteranceHandleData(utterances=["turn off the lights"], lang="en-US")
+)
+
+# --- intent matched notification (PIPELINE-1 §9.2) ---
+matched = OvosIntentMatchedMessage(
+    data=OvosIntentMatchedData(
+        skill_id="lights.skill", intent_name="TurnOffIntent",
+        lang="en-US", utterance="turn off the lights",
+        pipeline_id="template-high", slots={"room": "living room"},
+    )
+)
+
+# --- handler lifecycle (PIPELINE-1 §8) ---
+start = OvosIntentHandlerStartMessage(
+    data=OvosIntentHandlerStartData(skill_id="lights.skill", intent_name="TurnOffIntent")
+)
+complete = OvosIntentHandlerCompleteMessage(
+    data=OvosIntentHandlerCompleteData(skill_id="lights.skill", intent_name="TurnOffIntent")
+)
+
+# --- natural-language response (PIPELINE-1 §9.6) ---
+response = OvosUtteranceSpeakMessage(
+    data=OvosUtteranceSpeakData(utterance="Lights are off.", lang="en-US")
+)
+
+# --- STOP-1 spec bus surface ---
+ping = OvosStopPingMessage()
+pong = OvosStopPongMessage(data=OvosStopPongData(can_handle=True, skill_id="timer.skill"))
+broadcast = OvosStopMessage()
+```
 
 ---
 
