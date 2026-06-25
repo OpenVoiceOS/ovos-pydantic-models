@@ -430,3 +430,13 @@ class DetachIntentMessage(OpenVoiceOSMessage):
     """
     message_type: str = "detach_intent"
     data: DetachIntentData
+
+
+class MycroftSkillLoadedMessage(OpenVoiceOSMessage):
+    """Emitted by ovos-core after a single skill has been loaded successfully.
+
+    Distinct from ``mycroft.skills.loaded`` (all skills loaded) — this fires
+    once per skill as each is loaded. Carries ``skill_id``.
+    """
+    message_type: str = "mycroft.skill.loaded"
+    data: Dict[str, Any] = Field(default_factory=dict)

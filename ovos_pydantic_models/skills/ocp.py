@@ -1119,3 +1119,56 @@ class OvosCommonPlaySeiGetResponseMessage(OpenVoiceOSMessage):
     """
     message_type: str = "ovos.common_play.SEI.get.response"
     data: OvosCommonPlaySeiGetResponseData
+
+
+# --- OCP response messages (not previously modeled) ---
+
+class OvosCommonPlayGetTrackLengthResponseMessage(OpenVoiceOSMessage):
+    """Reply to a track-length query from OCP.
+
+    Emitted by the active media backend in reply to
+    ``ovos.common_play.get_track_length``. Carries the duration in
+    milliseconds.
+    """
+    message_type: str = "ovos.common_play.get_track_length.response"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosCommonPlayGetTrackPositionResponseMessage(OpenVoiceOSMessage):
+    """Reply to a track-position query from OCP.
+
+    Emitted by the active media backend in reply to
+    ``ovos.common_play.get_track_position``. Carries the current playback
+    position in milliseconds.
+    """
+    message_type: str = "ovos.common_play.get_track_position.response"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosCommonPlayListBackendsResponseMessage(OpenVoiceOSMessage):
+    """Reply carrying the list of available OCP audio backends.
+
+    Emitted by ovos-media in reply to ``ovos.common_play.list_backends``.
+    """
+    message_type: str = "ovos.common_play.list_backends.response"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosCommonPlayMprisNowPlayingMessage(OpenVoiceOSMessage):
+    """Broadcast current playback state to MPRIS consumers.
+
+    Emitted by ovos-media whenever the now-playing track or playback state
+    changes, allowing MPRIS-based clients (system media controls, desktop
+    widgets) to stay in sync.
+    """
+    message_type: str = "ovos.common_play.mpris.now_playing"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosCommonPlayPongMessage(OpenVoiceOSMessage):
+    """Heartbeat reply confirming OCP / ovos-media is alive.
+
+    Emitted by ovos-media in reply to ``ovos.common_play.ping``.
+    """
+    message_type: str = "ovos.common_play.pong"
+    data: Dict[str, Any] = Field(default_factory=dict)
