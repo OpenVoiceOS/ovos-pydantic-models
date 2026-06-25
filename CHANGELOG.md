@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0a2](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.0a2) (2026-06-25)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.0a1...0.2.0a2)
+
+**Merged pull requests:**
+
+- chore: Configure Renovate [\#4](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/4) ([renovate[bot]](https://github.com/apps/renovate))
+
 ## [0.2.0a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.0a1) (2026-06-25)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.1.2a1...0.2.0a1)
