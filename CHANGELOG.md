@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.0a1) (2026-06-25)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.1.2a1...0.2.0a1)
+
+**Merged pull requests:**
+
+- feat: coverage-gap pass — model 40 previously unmodeled bus message types [\#9](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/9) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.1.2a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.1.2a1) (2026-06-14)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.1.1...0.1.2a1)
