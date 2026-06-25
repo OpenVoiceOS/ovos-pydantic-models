@@ -82,3 +82,16 @@ class SchedulerListEventsMessage(OpenVoiceOSMessage):
     """
     message_type: str = "mycroft.scheduler.list_events"
     data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class SchedulerUpdateEventLegacyMessage(OpenVoiceOSMessage):
+    """Update a pending scheduled event (legacy bus-client path).
+
+    Emitted by ``ovos_bus_client.apis.events.EventSchedulerInterface``
+    via ``message.forward('mycroft.schedule.update_event', data)``.
+    Note: the canonical spelling used by the scheduler service itself
+    is ``mycroft.scheduler.update_event`` (see ``SchedulerUpdateEventMessage``);
+    this legacy form is used by the bus-client API helper.
+    """
+    message_type: str = "mycroft.schedule.update_event"
+    data: Dict[str, Any] = Field(default_factory=dict)

@@ -171,3 +171,15 @@ class SkillDeactivateMessage(OpenVoiceOSMessage):
     """
     message_type: str = Field(..., description="Dynamic: '{skill_id}.deactivate'.")
     data: SkillDeactivateData = Field(default_factory=SkillDeactivateData)
+
+
+class OvosUtteranceSpeakMessage(OpenVoiceOSMessage):
+    """Request TTS synthesis and playback — OVOS spec namespace (PIPELINE-1 §9.6).
+
+    OVOS-namespace counterpart to the legacy ``speak`` message.
+    When ``legacy_namespace`` is disabled, ovos-audio subscribes to this
+    topic instead of ``speak``. The ``SpecMessage.SPEAK`` constant in
+    ovos-spec-tools resolves to this type.
+    """
+    message_type: str = "ovos.utterance.speak"
+    data: Dict[str, Any] = Field(default_factory=dict)

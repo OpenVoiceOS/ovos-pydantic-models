@@ -175,3 +175,14 @@ class PlayQueryResponseMessage(OpenVoiceOSMessage):
     """
     message_type: str = "play:query.response"
     data: PlayQueryResponseData
+
+
+class QuestionQueryHandlingMessage(OpenVoiceOSMessage):
+    """Register a handler for an in-flight common-query collection round.
+
+    Emitted internally by the ``CollectionClientBus`` helper in
+    ovos-bus-client when a skill announces it is handling a query. Carries
+    ``query`` (collection ID), ``handler`` (skill ID), and ``timeout``.
+    """
+    message_type: str = "question:query.handling"
+    data: Dict[str, Any] = Field(default_factory=dict)
