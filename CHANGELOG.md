@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0a3](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.0a3) (2026-07-31)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.0a2...0.2.0a3)
+
+**Merged pull requests:**
+
+- docs: rewrite README in Simplified Technical English [\#19](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/19) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.2.0a2](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.0a2) (2026-06-25)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.0a1...0.2.0a2)
