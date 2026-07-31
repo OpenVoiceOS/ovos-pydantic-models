@@ -72,6 +72,9 @@ msg = MycroftAudioQueueMessage(
 | `filename` | `str \| None` | `None` | Deprecated — use `uri` |
 | `binary_data` | `str \| None` | `None` | Hex-encoded audio bytes |
 | `audio_ext` | `str \| None` | `None` | Extension for binary data (e.g. `"wav"`) |
+
+| Field | Type | Default | Description |
+|---|---|---|---|
 | `viseme` | `list \| None` | `None` | `(timestamp, viseme)` pairs for mouth animation |
 | `listen` | `bool` | `False` | Activate listener after playback |
 
@@ -118,14 +121,23 @@ from ovos_pydantic_models.audio.audioservice import (
 | `mycroft.audio.service.pause` | `AudioServicePauseMessage` | no |
 | `mycroft.audio.service.resume` | `AudioServiceResumeMessage` | no |
 | `mycroft.audio.service.stop` | `AudioServiceStopMessage` | no |
+
+| Message type | Class | Has data? |
+|---|---|---|
 | `mycroft.audio.service.next` | `AudioServiceNextMessage` | no |
 | `mycroft.audio.service.prev` | `AudioServicePrevMessage` | no |
 | `mycroft.audio.service.seek_forward` | `AudioServiceSeekForwardMessage` | no |
 | `mycroft.audio.service.seek_backward` | `AudioServiceSeekBackwardMessage` | no |
+
+| Message type | Class | Has data? |
+|---|---|---|
 | `mycroft.audio.service.track_info` | `AudioServiceTrackInfoMessage` | no |
 | `ovos.audio.service.play` | `OvosAudioServicePlayMessage` | yes |
 | `ovos.audio.service.pause` | `OvosAudioServicePauseMessage` | no |
 | `ovos.audio.service.resume` | `OvosAudioServiceResumeMessage` | no |
+
+| Message type | Class | Has data? |
+|---|---|---|
 | `ovos.audio.service.stop` | `OvosAudioServiceStopMessage` | no |
 | `ovos.audio.service.next` | `OvosAudioServiceNextMessage` | no |
 | `ovos.audio.service.prev` | `OvosAudioServicePrevMessage` | no |
@@ -156,10 +168,16 @@ from ovos_pydantic_models.audio.ocp import OcpMediaState
 | `NO_MEDIA` | 1 |
 | `LOADING_MEDIA` | 2 |
 | `LOADED_MEDIA` | 3 |
+
+| Value | Int |
+|---|---|
 | `STALLED_MEDIA` | 4 |
 | `BUFFERING_MEDIA` | 5 |
 | `BUFFERED_MEDIA` | 6 |
 | `END_OF_MEDIA` | 7 |
+
+| Value | Int |
+|---|---|
 | `INVALID_MEDIA` | 8 |
 
 > Distinct from `skills/ocp.py::MediaState` (str Enum for OCP player state: `PLAYING`, `PAUSED`, etc.). See [ocp.md](ocp.md).
@@ -185,3 +203,6 @@ reply = OvosLanguagesTtsResponseMessage(
 |---|---|
 | `ovos.languages.tts` | `OvosLanguagesTtsMessage` |
 | `ovos.languages.tts.response` | `OvosLanguagesTtsResponseMessage` |
+
+---
+[← Listener](listener.md) · [Home](index.md) · [OCP →](ocp.md)

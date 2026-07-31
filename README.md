@@ -47,6 +47,9 @@ Messages are organized by subsystem:
 | `mycroft.audio.service.play` | `AudioServicePlayMessage` |
 | `mycroft.audio.service.pause` | `AudioServicePauseMessage` |
 | `mycroft.audio.service.resume` | `AudioServiceResumeMessage` |
+
+| Message type | Class |
+|---|---|
 | `mycroft.audio.service.stop` | `AudioServiceStopMessage` |
 | `mycroft.audio.queue` | `MycroftAudioQueueMessage` |
 | `ovos.languages.tts` | `OvosLanguagesTtsMessage` |
@@ -60,10 +63,16 @@ Messages are organized by subsystem:
 | `recognizer_loop:wakeword` | `RecognizerLoopWakeWordMessage` |
 | `recognizer_loop:state.set` | `RecognizerLoopStateSetMessage` |
 | `recognizer_loop:state.get` | `RecognizerLoopStateGetMessage` |
+
+| Message type | Class |
+|---|---|
 | `recognizer_loop:state.get.response` | `RecognizerLoopStateResponseMessage` |
 | `mycroft.mic.mute` | `MycroftMicMuteMessage` |
 | `mycroft.mic.listen` | `MycroftMicListenMessage` |
 | `ovos.languages.stt` | `OvosLanguagesSttMessage` |
+
+| Message type | Class |
+|---|---|
 | `ovos.languages.stt.response` | `OvosLanguagesSttResponseMessage` |
 | `opm.ww.query` | `OpmWwQueryMessage` |
 
@@ -75,18 +84,30 @@ Messages are organized by subsystem:
 | `ovos.utterance.cancelled` | `OvosUtteranceCancelledMessage` |
 | `complete_intent_failure` | `CompleteIntentFailureMessage` |
 | `add_context` | `AddContextMessage` |
+
+| Message type | Class |
+|---|---|
 | `remove_context` | `RemoveContextMessage` |
 | `clear_context` | `ClearContextMessage` |
 | `intent.service.skills.activate` | `IntentServiceSkillsActivateMessage` |
 | `intent.service.skills.deactivate` | `IntentServiceSkillsDeactivateMessage` |
+
+| Message type | Class |
+|---|---|
 | `skill.converse.pong` | `SkillConversePongMessage` |
 | `skill.converse.response` | `SkillConverseResponseMessage` |
 | `ovos.skills.fallback.register` | `OvosSkillsFallbackRegisterMessage` |
 | `ovos.skills.fallback.ping` | `OvosSkillsFallbackPingMessage` |
+
+| Message type | Class |
+|---|---|
 | `ovos.skills.fallback.pong` | `OvosSkillsFallbackPongMessage` |
 | `stop:global` | `StopGlobalMessage` |
 | `stop:skill` | `StopSkillMessage` |
 | `mycroft.stop` | `MycroftStopMessage` |
+
+| Message type | Class |
+|---|---|
 | `mycroft.skills.abort_question` | `MycroftSkillsAbortQuestionMessage` |
 | `mycroft.skills.abort_execution` | `MycroftSkillsAbortExecutionMessage` |
 
@@ -98,14 +119,23 @@ Messages are organized by subsystem:
 | `mycroft.skills.ready` | `MycroftSkillsReadyMessage` |
 | `mycroft.skills.is_ready` | `MycroftSkillsIsReadyMessage` |
 | `mycroft.skills.is_ready.response` | `MycroftSkillsIsReadyResponseMessage` |
+
+| Message type | Class |
+|---|---|
 | `mycroft.skills.list` | `MycroftSkillsListMessage` |
 | `skillmanager.list` | `SkillManagerListMessage` |
 | `skillmanager.deactivate` | `SkillManagerDeactivateMessage` |
 | `mycroft.skills.error` | `MycroftSkillsErrorMessage` |
+
+| Message type | Class |
+|---|---|
 | `skill.settings.change` | `SkillSettingsChangeMessage` |
 | `ovos.skills.settings_changed` | `OvosSkillsSettingsChangedMessage` |
 | `ovos.skills.install` | `OvosSkillsInstallMessage` |
 | `ovos.skills.install.failed` | `OvosSkillsInstallFailedMessage` |
+
+| Message type | Class |
+|---|---|
 | `ovos.pip.install` | `OvosPipInstallMessage` |
 | `ovos.session.sync` | `OvosSessionSyncMessage` |
 | `ovos.session.update_default` | `OvosSessionUpdateDefaultMessage` |
@@ -118,6 +148,9 @@ Messages are organized by subsystem:
 | `ovos.common_play.query.response` | `OvosCommonPlayQueryResponseMessage` |
 | `ovos.common_play.announce` | `OvosCommonPlayAnnounceMessage` |
 | `ovos.common_play.player.state` | `OvosCommonPlayPlayerStateMessage` |
+
+| Message type | Class |
+|---|---|
 | `ovos.common_play.skills.detach` | `OvosCommonPlaySkillsDetachMessage` |
 | `ovos.common_play.register_keyword` | `OvosCommonPlayRegisterKeywordMessage` |
 | `ovos.common_play.skill.play` | `OvosCommonPlaySkillPlayMessage` |
@@ -187,9 +220,16 @@ ovos_pydantic_models/
     volume.py
 ```
 
+## Related Projects
+
+- [OpenVoiceOS/ovos-messagebus](https://github.com/OpenVoiceOS/ovos-messagebus): the message bus these models validate.
+- [OpenVoiceOS/ovos-bus-client](https://github.com/OpenVoiceOS/ovos-bus-client): the untyped client library this package complements.
+- [OpenVoiceOS/ovos-audio](https://github.com/OpenVoiceOS/ovos-audio): the TTS and audio playback service that produces and consumes the audio messages.
+- [OpenVoiceOS/ovos-dinkum-listener](https://github.com/OpenVoiceOS/ovos-dinkum-listener): the wake word and STT service that produces the listener messages.
+
 ## License
 
-Apache 2.0 — see [LICENSE](LICENSE)
+Apache 2.0. See [LICENSE](LICENSE).
 
 ---
 

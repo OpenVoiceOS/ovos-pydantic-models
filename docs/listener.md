@@ -14,6 +14,9 @@ from ovos_pydantic_models.listener.recognizer_loop import ListeningState
 | `WAITING_FOR_WAKEWORD` | `"waiting_for_wakeword"` |
 | `CONTINUOUS` | `"continuous"` |
 | `RECORDING` | `"recording"` |
+
+| Value | String |
+|---|---|
 | `MUTED` | `"muted"` |
 | `DISABLED` | `"disabled"` |
 
@@ -42,6 +45,9 @@ msg = RecognizerLoopUtteranceMessage(data=data)
 | `lang` | `str` | yes | Language code (e.g. `"en-us"`) |
 | `filename` | `str \| None` | no | URI to saved audio file |
 | `transcriptions` | `list[tuple[str, float]] \| None` | no | `(text, confidence)` pairs from STT |
+
+| Field | Type | Required | Description |
+|---|---|---|---|
 | `transcription` | `str \| None` | no | Deprecated: single transcription string |
 | `recording_name` | `str \| None` | no | Name of saved recording |
 
@@ -73,10 +79,16 @@ from ovos_pydantic_models.listener.recognizer_loop import (
 | `engine` | `str` | yes | MD5 hash of the hotword engine module |
 | `time` | `str` | yes | Detection timestamp (ms since epoch) |
 | `sessionId` | `str` | yes | Session ID |
+
+| Field | Type | Required | Description |
+|---|---|---|---|
 | `accountId` | `str` | yes | Account ID (e.g. `"Anon"`) |
 | `model` | `str` | yes | Model hash/identifier |
 | `utterance` | `str \| None` | no | Transcription if hotword includes STT |
 | `sound` | `str \| list[str] \| None` | no | Sound file(s) to play on detection |
+
+| Field | Type | Required | Description |
+|---|---|---|---|
 | `listen` | `bool \| None` | no | Whether to enter listening mode |
 | `event` | `str \| None` | no | Custom event type to emit |
 | `filename` | `str \| None` | no | URI to saved hotword audio |
@@ -118,6 +130,9 @@ reply = RecognizerLoopStateResponseMessage(data=reply_data)
 | `recognizer_loop:record_end` | `RecognizerLoopRecordEndMessage` |
 | `recognizer_loop:record_stop` | `RecognizerLoopRecordStopMessage` |
 | `recognizer_loop:sleep` | `RecognizerLoopSleepMessage` |
+
+| Message type | Class |
+|---|---|
 | `recognizer_loop:wake_up` | `RecognizerLoopWakeUpMessage` |
 | `recognizer_loop:speech.recognition.unknown` | `RecognizerLoopSpeechRecognitionUnknownMessage` |
 | `mycroft.awoken` | `MycroftAwokenMessage` |
@@ -134,6 +149,9 @@ All mic control messages carry no data payload.
 | `mycroft.mic.unmute` | `MycroftMicUnmuteMessage` |
 | `mycroft.mic.mute.toggle` | `MycroftMicMuteToggleMessage` |
 | `mycroft.mic.listen` | `MycroftMicListenMessage` |
+
+| Message type | Class |
+|---|---|
 | `mycroft.mic.get_status` | `MycroftMicGetStatusMessage` |
 
 ### `mycroft.mic.get_status.response`
@@ -194,3 +212,6 @@ from ovos_pydantic_models.listener.opm import (
 | `ovos.languages.stt` | `OvosLanguagesSttMessage` | Request supported STT languages |
 | `ovos.languages.stt.response` | `OvosLanguagesSttResponseMessage` | Reply with `langs: list[str]` |
 | `opm.ww.query` | `OpmWwQueryMessage` | Query available wake word plugins |
+
+---
+[← Message base and session](message-base.md) · [Home](index.md) · [Audio →](audio.md)
