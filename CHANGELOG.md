@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.1a1) (2026-08-02)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.0a3...0.2.1a1)
+
+**Merged pull requests:**
+
+- fix: publish alphas to PyPI on merge [\#21](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/21) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.2.0a3](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.0a3) (2026-07-31)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.0a2...0.2.0a3)
