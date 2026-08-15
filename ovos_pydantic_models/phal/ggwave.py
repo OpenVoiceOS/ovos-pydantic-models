@@ -26,7 +26,7 @@ class GgwaveEnabledMessage(OpenVoiceOSMessage):
 
     Emitted by the ggwave PHAL plugin after successfully enabling.
     """
-    message_type: str = "ggwave.enabled"
+    message_type: str = "ovos.ggwave.enabled"
     data: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -35,5 +35,5 @@ class GgwaveDisabledMessage(OpenVoiceOSMessage):
 
     Emitted by the ggwave PHAL plugin after successfully disabling.
     """
-    message_type: str = "ggwave.disabled"
+    message_type: str = "ovos.ggwave.disabled"
     data: Dict[str, Any] = Field(default_factory=dict)
