@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.2a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.2a1) (2026-08-15)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.1a1...0.2.2a1)
+
+**Merged pull requests:**
+
+- fix: ggwave confirmation models use the plugin's ovos-prefixed topics [\#23](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/23) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.2.1a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.1a1) (2026-08-02)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.0a3...0.2.1a1)
@@ -39,6 +47,20 @@
 **Merged pull requests:**
 
 - docs: add NGI0 Commons Fund attribution [\#7](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/7) ([JarbasAl](https://github.com/JarbasAl))
+
+## [0.1.1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.1.1) (2026-03-10)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.1.1a1...0.1.1)
+
+## [0.1.1a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.1.1a1) (2026-03-10)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/d38d58723a2b384282fe48acdd6f727995a34a9e...0.1.1a1)
+
+**Merged pull requests:**
+
+- fix: add missing message input to notify workflow [\#3](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/3) ([JarbasAl](https://github.com/JarbasAl))
+- Workf [\#2](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/2) ([JarbasAl](https://github.com/JarbasAl))
+- chore: release\_workflow.yml [\#1](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/1) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
