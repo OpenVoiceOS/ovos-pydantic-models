@@ -335,7 +335,7 @@ OCP routes these to the specific skill currently playing:
 | Message type | Class | Key data |
 |---|---|---|
 | `ovos.common_play.status` | `OvosCommonPlayStatusMessage` | n/a (request) |
-| `ovos.common_play.status.response` | `OvosCommonPlayStatusResponseMessage` | `state`, `media`, etc. |
+| `ovos.common_play.status.response` | `OvosCommonPlayStatusResponseMessage` | `player_state`, `media_state`, `media_type`, `title`, `artist`, etc. |
 | `ovos.common_play.track_info` | `OvosCommonPlayTrackInfoMessage` | n/a (request) |
 | `ovos.common_play.track_info.response` | `OvosCommonPlayTrackInfoResponseMessage` | `MediaEntry` fields |
 
