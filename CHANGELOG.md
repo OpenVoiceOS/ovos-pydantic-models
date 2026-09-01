@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.6a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.6a1) (2026-09-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.5a1...0.2.6a1)
+
+**Merged pull requests:**
+
+- fix: session, intent and common-query models match the ratified wire [\#35](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/35) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.2.5a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.5a1) (2026-09-01)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.4a6...0.2.5a1)
