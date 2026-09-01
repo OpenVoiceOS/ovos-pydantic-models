@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.4a5](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.4a5) (2026-09-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.4a4...0.2.4a5)
+
+**Merged pull requests:**
+
+- Update actions/checkout action to v7 [\#12](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/12) ([renovate[bot]](https://github.com/apps/renovate))
+
 ## [0.2.4a4](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.4a4) (2026-09-01)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.4a3...0.2.4a4)
