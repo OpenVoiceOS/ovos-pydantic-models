@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.5a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.5a1) (2026-09-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.4a6...0.2.5a1)
+
+**Merged pull requests:**
+
+- fix: the wire key for a message's type is "type" [\#34](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/34) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.2.4a6](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.4a6) (2026-09-01)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.4a5...0.2.4a6)
