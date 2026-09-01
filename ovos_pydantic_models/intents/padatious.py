@@ -8,13 +8,19 @@ from ovos_pydantic_models.message import OpenVoiceOSMessage
 # --- Intent / Entity Registration ---
 
 class PadatiousRegisterIntentData(BaseModel):
-    """Payload for registering a Padatious intent with its training utterances."""
-    skill_id: str = Field(..., description="ID of the skill registering this intent.")
+    """Payload for registering a Padatious intent with its training utterances.
+
+    The registering skill is identified by `context.skill_id`, not by a payload
+    field.
+    """
     name: str = Field(..., description="Fully-qualified intent name (e.g. '{skill_id}:{IntentName}').")
     file_name: Optional[str] = Field(None, description="Path to the .intent file containing training utterances.")
     samples: Optional[List[str]] = Field(None, description="Inline training utterances (used if file_name is absent or unreadable).")
     lang: str = Field(..., description="BCP-47 language code for this intent.")
-    blacklisted_words: List[str] = Field(default_factory=list, description="Words that, if present, disqualify a match.")
+    blacklisted_words: Optional[List[str]] = Field(None, description="Words that, if present, disqualify a match.")
+    slot_blacklist: Optional[Dict[str, List[str]]] = Field(None, description="Per-slot values that disqualify a match.")
+    requires_context: Optional[List[Any]] = Field(None, description="Context gates that must be satisfied for this intent to match.")
+    excludes_context: Optional[List[Any]] = Field(None, description="Context gates that, if satisfied, block this intent.")
 
 
 class PadatiousRegisterIntentMessage(OpenVoiceOSMessage):
@@ -38,12 +44,16 @@ class PadatiousRegisterIntentMessage(OpenVoiceOSMessage):
 
 
 class PadatiousRegisterEntityData(BaseModel):
-    """Payload for registering a Padatious named entity with its training values."""
-    skill_id: str = Field(..., description="ID of the skill registering this entity.")
+    """Payload for registering a Padatious named entity with its training values.
+
+    The registering skill is identified by `context.skill_id`, not by a payload
+    field.
+    """
     name: str = Field(..., description="Entity name (e.g. '{skill_id}:{EntityName}').")
     file_name: Optional[str] = Field(None, description="Path to the .entity file containing entity values.")
     samples: Optional[List[str]] = Field(None, description="Inline entity values (used if file_name is absent or unreadable).")
     lang: str = Field(..., description="BCP-47 language code for this entity.")
+    blacklist: Optional[List[str]] = Field(None, description="Entity values that must never be matched.")
 
 
 class PadatiousRegisterEntityMessage(OpenVoiceOSMessage):

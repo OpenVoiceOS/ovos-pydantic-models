@@ -1,7 +1,8 @@
 # Base message types
 from ovos_pydantic_models.version import __version__
 from ovos_pydantic_models.message import OpenVoiceOSMessage, MessageContext
-from ovos_pydantic_models.session import Session, UtteranceState, IntentContextManager, IntentContextManagerFrame, ContextEntity
+from ovos_pydantic_models.session import (Session, UtteranceState, IntentContextManager, IntentContextManagerFrame,
+                                          ContextEntity, SessionHandler, ResponseMode)
 
 # Audio — playback / TTS
 from ovos_pydantic_models.audio.playback import (
@@ -223,6 +224,7 @@ from ovos_pydantic_models.skills.common_query import (
     QuestionActionData, QuestionActionMessage,
     OvosCommonQueryPingMessage,
     OvosCommonQueryPongData, OvosCommonQueryPongMessage,
+    OvosCommonQueryPongLegacyData, OvosCommonQueryPongLegacyMessage,
     QuestionQueryResponseData, QuestionQueryResponseMessage,
 )
 

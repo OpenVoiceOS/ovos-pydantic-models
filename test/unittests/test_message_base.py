@@ -58,7 +58,7 @@ class TestSession:
         session = Session()
         assert session.session_id == "default"
         assert session.lang == "en-us"
-        assert session.pipeline  # non-empty default pipeline
+        assert session.pipeline is None  # absent on the wire, not fabricated
 
     def test_custom_session(self):
         session = Session(session_id="my-session", lang="es-es", site_id="kitchen")
