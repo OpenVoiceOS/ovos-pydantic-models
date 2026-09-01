@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.4a6](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.4a6) (2026-09-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.4a5...0.2.4a6)
+
+**Merged pull requests:**
+
+- Update dependency python to 3.14 [\#11](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/11) ([renovate[bot]](https://github.com/apps/renovate))
+
 ## [0.2.4a5](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.4a5) (2026-09-01)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.4a4...0.2.4a5)
