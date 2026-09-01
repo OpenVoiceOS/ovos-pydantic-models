@@ -1,3 +1,4 @@
+import json
 import pytest
 from pydantic import ValidationError
 
@@ -93,3 +94,27 @@ class TestIntentContextManager:
         restored = IntentContextManager.model_validate(ctx.model_dump())
         assert restored.timeout == 60
         assert restored.context_greedy is True
+
+
+class TestWireFormatAlias:
+    """message.py:26 - the wire key for a message's type is "type" (MSG-1),
+    not "message_type". A real ovos-bus-client Message must round-trip."""
+
+    def test_bus_client_message_roundtrips_through_model(self):
+        from ovos_bus_client.message import Message
+
+        wire = json.loads(Message("ovos.utterance.handled", {"x": 1}).serialize())
+        assert "type" in wire
+        assert "message_type" not in wire
+
+        msg = OpenVoiceOSMessage.model_validate(wire)
+        assert msg.message_type == "ovos.utterance.handled"
+        assert msg.data == {"x": 1}
+
+        dumped = msg.model_dump(by_alias=True)
+        assert dumped["type"] == "ovos.utterance.handled"
+        assert "message_type" not in dumped
+
+    def test_construct_by_field_name_still_works(self):
+        msg = OpenVoiceOSMessage(message_type="speak")
+        assert msg.message_type == "speak"
