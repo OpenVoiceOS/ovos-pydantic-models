@@ -77,21 +77,47 @@ class OvosCommonQueryPingMessage(OpenVoiceOSMessage):
 
 
 class OvosCommonQueryPongData(BaseModel):
-    """A Common Query Skill's response to the discovery ping."""
-    skill_id: str = Field(..., description="The ID of the skill responding to the ping.")
-    is_classic_cq: bool = Field(True, description="Indicates if the skill is a classic CommonQuerySkill.")
+    """A skill's answer to the poll: whether it can answer this utterance."""
+    utterance: str = Field(..., description="Echo of the ping's utterance.")
+    skill_id: str = Field(..., description="The ID of the responding skill.")
+    can_answer: bool = Field(..., description="Whether the skill claims it can answer.")
+    latency_ms: Optional[float] = Field(None, description="Hint for how long a full answer is expected to take. Never a commitment.")
     model_config = ConfigDict(extra='allow')
 
 
 class OvosCommonQueryPongMessage(OpenVoiceOSMessage):
-    """A Common Query Skill announces its availability.
+    """A skill declares whether it can answer the polled utterance.
 
-    Emitted by CQS skills in reply to `ovos.common_query.ping`. The framework
-    adds the skill to its registry so it receives future `question:query`
-    broadcasts.
+    Emitted by a Common Query skill in reply to `ovos.common_query.ping`. The
+    pipeline plugin uses `can_answer` to narrow the skill set before running the
+    expensive full-answer round, and `latency_ms` to size its collection window.
+    The decision must be a fast local one — keyword or vocabulary matching, never
+    blocking I/O.
+
+    The contest is identified by `context.utterance_id`, carried onto the pong by
+    ordinary `reply` derivation.
     """
     message_type: str = "ovos.common_query.pong"
     data: OvosCommonQueryPongData
+
+
+class OvosCommonQueryPongLegacyData(BaseModel):
+    """Pre-spec pong payload: a skill announcing itself rather than answering."""
+    skill_id: str = Field(..., description="The ID of the skill responding to the ping.")
+    is_classic_cq: bool = Field(True, description="Whether the skill is a classic CommonQuerySkill.")
+    model_config = ConfigDict(extra='allow')
+
+
+class OvosCommonQueryPongLegacyMessage(OpenVoiceOSMessage):
+    """A skill announces its availability, without saying whether it can answer.
+
+    The shape `ovos-workshop` emits from its `ovos.common_query.ping` handler.
+    It predates the poll semantics and omits `can_answer`, so a plugin reading it
+    learns only that the skill exists. Producers should send
+    `OvosCommonQueryPongMessage` instead.
+    """
+    message_type: str = "ovos.common_query.pong"
+    data: OvosCommonQueryPongLegacyData
 
 
 class QuestionQueryResponseData(BaseModel):
