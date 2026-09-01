@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.4a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.4a1) (2026-09-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.3a1...0.2.4a1)
+
+**Merged pull requests:**
+
+- fix: scheduler message models mirror the real wire fields [\#26](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/26) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.2.3a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.3a1) (2026-09-01)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.2a1...0.2.3a1)
