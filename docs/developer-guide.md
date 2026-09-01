@@ -147,8 +147,8 @@ import time
 
 # Validate the schedule payload before sending
 payload = SchedulerScheduleEventData(
-    name="my_reminder",
-    when=time.time() + 60,
+    event="my_reminder",
+    time=time.time() + 60,
     data={"text": "your reminder"},
 )
 self.schedule_event(self._handle_reminder, 60, name="my_reminder")
