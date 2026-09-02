@@ -77,3 +77,34 @@ class PersonaCheckMessage(OpenVoiceOSMessage):
     """
     message_type: str = "persona:check"
     data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosPersonaInstallIndexMessage(OpenVoiceOSMessage):
+    """Request the persona skill to rebuild its index of installable personas.
+
+    Emitted after a persona plugin is installed or removed to trigger a
+    re-scan of available personas from the plugin manager.
+    """
+    message_type: str = "ovos.persona.install.index"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosPersonaToolsDiscoverMessage(OpenVoiceOSMessage):
+    """Broadcast a tool-discovery request to all registered toolboxes.
+
+    Emitted by ``OpmToolsAgent`` and agentic-loop toolboxes at startup (and
+    on reconnect). Each toolbox responds with ``ovos.persona.tools.discover.response``.
+    """
+    message_type: str = "ovos.persona.tools.discover"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosPersonaToolsDiscoverResponseMessage(OpenVoiceOSMessage):
+    """Reply from a toolbox to a tools-discovery broadcast.
+
+    Emitted by each ``AbstractToolbox`` that handles
+    ``ovos.persona.tools.discover``. Carries the toolbox ID and its tool
+    manifest so the solver can populate its tool registry.
+    """
+    message_type: str = "ovos.persona.tools.discover.response"
+    data: Dict[str, Any] = Field(default_factory=dict)

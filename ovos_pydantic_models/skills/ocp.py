@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field, ConfigDict
 
 from ovos_pydantic_models.message import OpenVoiceOSMessage, MessageContext
 from ovos_pydantic_models.session import Session
+from ovos_pydantic_models.audio.ocp import OcpMediaState
 
 
 class MediaType(str, Enum):
@@ -889,17 +890,34 @@ class OvosCommonPlayStatusMessage(OpenVoiceOSMessage):
 
 
 class OvosCommonPlayStatusResponseData(BaseModel):
-    """Full OCP player status including state and currently playing entry."""
-    state: Optional[PlayerState] = None
-    media: Optional[Union[MediaEntry, Dict[str, Any]]] = None
+    """Snapshot of the ovos-media player, as broadcast by its daemon.
+
+    `playback_type`, `media_type`, `player_state`, and `loop_state` carry the
+    raw wire values of the `PlaybackType`, `MediaType`, `PlayerState`, and
+    `LoopState` int enums from `ovos_utils.ocp` — a different, numeric
+    vocabulary from the str enums of the same name defined in this module.
+    `media_state` matches `OcpMediaState` (`audio/ocp.py`) exactly.
+    """
+    playback_type: Optional[int] = None
+    media_type: Optional[int] = None
+    player_state: Optional[int] = None
+    loop_state: Optional[int] = None
+    media_state: Optional[OcpMediaState] = None
+    shuffle: Optional[bool] = None
+    playlist_position: Optional[int] = None
+    playlist_size: Optional[int] = None
+    title: Optional[str] = None
+    artist: Optional[str] = None
+    image: Optional[str] = None
     model_config = ConfigDict(extra='allow')
 
 
 class OvosCommonPlayStatusResponseMessage(OpenVoiceOSMessage):
-    """Return the full OCP player status.
+    """Return the full ovos-media player status.
 
-    Emitted by OCP in response to `ovos.common_play.status`. Includes the
-    current `PlayerState` and the active `MediaEntry` (if any).
+    Emitted by the ovos-media player daemon in response to
+    `ovos.common_play.status`. Consumed by the OCP pipeline plugin and by
+    GUIs/clients that need to initialize their now-playing display.
     """
     message_type: str = "ovos.common_play.status.response"
     data: OvosCommonPlayStatusResponseData
@@ -1119,3 +1137,56 @@ class OvosCommonPlaySeiGetResponseMessage(OpenVoiceOSMessage):
     """
     message_type: str = "ovos.common_play.SEI.get.response"
     data: OvosCommonPlaySeiGetResponseData
+
+
+# --- OCP response messages (not previously modeled) ---
+
+class OvosCommonPlayGetTrackLengthResponseMessage(OpenVoiceOSMessage):
+    """Reply to a track-length query from OCP.
+
+    Emitted by the active media backend in reply to
+    ``ovos.common_play.get_track_length``. Carries the duration in
+    milliseconds.
+    """
+    message_type: str = "ovos.common_play.get_track_length.response"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosCommonPlayGetTrackPositionResponseMessage(OpenVoiceOSMessage):
+    """Reply to a track-position query from OCP.
+
+    Emitted by the active media backend in reply to
+    ``ovos.common_play.get_track_position``. Carries the current playback
+    position in milliseconds.
+    """
+    message_type: str = "ovos.common_play.get_track_position.response"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosCommonPlayListBackendsResponseMessage(OpenVoiceOSMessage):
+    """Reply carrying the list of available OCP audio backends.
+
+    Emitted by ovos-media in reply to ``ovos.common_play.list_backends``.
+    """
+    message_type: str = "ovos.common_play.list_backends.response"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosCommonPlayMprisNowPlayingMessage(OpenVoiceOSMessage):
+    """Broadcast current playback state to MPRIS consumers.
+
+    Emitted by ovos-media whenever the now-playing track or playback state
+    changes, allowing MPRIS-based clients (system media controls, desktop
+    widgets) to stay in sync.
+    """
+    message_type: str = "ovos.common_play.mpris.now_playing"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosCommonPlayPongMessage(OpenVoiceOSMessage):
+    """Heartbeat reply confirming OCP / ovos-media is alive.
+
+    Emitted by ovos-media in reply to ``ovos.common_play.ping``.
+    """
+    message_type: str = "ovos.common_play.pong"
+    data: Dict[str, Any] = Field(default_factory=dict)

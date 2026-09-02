@@ -1,4 +1,4 @@
-# Developer Guide — Using ovos-pydantic-models
+# Developer Guide: Using ovos-pydantic-models
 
 `ovos-pydantic-models` provides typed Pydantic v2 models for every message that flows over the OVOS MessageBus. This guide explains when and how to use it in skills, plugins, and core components.
 
@@ -6,10 +6,10 @@
 
 ## Why use this library?
 
-The raw OVOS MessageBus API uses `ovos_bus_client.message.Message` — essentially a dict wrapper with no type checking:
+The raw OVOS MessageBus API uses `ovos_bus_client.message.Message`, a dict wrapper with no type checking:
 
 ```python
-# Untyped — any typo silently produces a wrong message
+# Untyped: a typo silently produces a wrong message
 msg = Message("speak", {"utterence": "hello"})  # typo in key, no error
 ```
 
@@ -18,16 +18,16 @@ With pydantic models:
 ```python
 from ovos_pydantic_models import SpeakMessage, SpeakData
 
-# Validated at construction — typo raises ValidationError immediately
+# Validated at construction: a typo raises ValidationError immediately
 msg = SpeakMessage(data=SpeakData(utterance="hello"))
 ```
 
 Benefits:
-- **Catch errors early** — wrong field names and wrong types raise `ValidationError` at construction, not silently at runtime
-- **IDE autocomplete** — field names and types are known
-- **Self-documenting** — the model is the schema
-- **Serialization roundtrip** — `model_dump()` / `model_validate()` for free
-- **Test fixtures** — build expected messages with validation instead of plain dicts
+- **Catch errors early**: wrong field names and wrong types raise `ValidationError` at construction, not silently at runtime.
+- **IDE autocomplete**: field names and types are known.
+- **Self-documenting**: the model is the schema.
+- **Serialization roundtrip**: `model_dump()` and `model_validate()` come for free.
+- **Test fixtures**: build expected messages with validation instead of plain dicts.
 
 ---
 
@@ -147,8 +147,8 @@ import time
 
 # Validate the schedule payload before sending
 payload = SchedulerScheduleEventData(
-    name="my_reminder",
-    when=time.time() + 60,
+    event="my_reminder",
+    time=time.time() + 60,
     data={"text": "your reminder"},
 )
 self.schedule_event(self._handle_reminder, 60, name="my_reminder")
@@ -347,9 +347,9 @@ self.bus.emit(to_bus_message(patch))
 
 ## When NOT to use pydantic models
 
-- **Ephemeral fire-and-forget messages with no data** — just use `self.bus.emit(Message("my.event"))`. No benefit to wrapping a no-data message.
-- **Skills using the OVOSSkill API directly** — `self.speak()`, `self.ask_yesno()`, etc. already produce the right messages. Use models only when you need lower-level control or test assertions.
-- **Skill settings** — managed by `ovos-workshop` settings system; don't manually build settings messages.
+- **Ephemeral fire-and-forget messages with no data**: use `self.bus.emit(Message("my.event"))`. There is no benefit to wrapping a no-data message.
+- **Skills using the OVOSSkill API directly**: `self.speak()` and `self.ask_yesno()` already produce the right messages. Use models only when you need lower-level control or test assertions.
+- **Skill settings**: managed by the `ovos-workshop` settings system. Do not build settings messages by hand.
 
 ---
 
@@ -363,5 +363,11 @@ See individual doc files for per-subsystem references:
 | Listener (STT, wake word, mic) | `docs/listener.md` |
 | Audio / TTS | `docs/audio.md` |
 | Intent pipeline (converse, fallback, stop) | `docs/intent-pipeline.md` |
+
+| Subsystem | File |
+|---|---|
 | OCP (Common Play) | `docs/ocp.md` |
 | Skill manager / installer | `docs/skill-manager.md` |
+
+---
+[Home](index.md) · [Message base and session →](message-base.md)

@@ -1,14 +1,140 @@
 # Changelog
 
-## [0.1.1a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.1.1a1) (2026-03-10)
+## [0.3.1a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.3.1a1) (2026-09-02)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/d38d58723a2b384282fe48acdd6f727995a34a9e...0.1.1a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.3.0a1...0.3.1a1)
 
 **Merged pull requests:**
 
-- fix: add missing message input to notify workflow [\#3](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/3) ([JarbasAl](https://github.com/JarbasAl))
-- Workf [\#2](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/2) ([JarbasAl](https://github.com/JarbasAl))
-- chore: release\_workflow.yml [\#1](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/1) ([JarbasAl](https://github.com/JarbasAl))
+- fix: dependencies and lazy imports for the live-capture tests [\#40](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/40) ([JarbasAl](https://github.com/JarbasAl))
+
+## [0.3.0a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.3.0a1) (2026-09-02)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.6a1...0.3.0a1)
+
+**Merged pull requests:**
+
+- feat: models for the ratified intent, pipeline and poll topics [\#38](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/38) ([JarbasAl](https://github.com/JarbasAl))
+
+## [0.2.6a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.6a1) (2026-09-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.5a1...0.2.6a1)
+
+**Merged pull requests:**
+
+- fix: session, intent and common-query models match the ratified wire [\#35](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/35) ([JarbasAl](https://github.com/JarbasAl))
+
+## [0.2.5a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.5a1) (2026-09-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.4a6...0.2.5a1)
+
+**Merged pull requests:**
+
+- fix: the wire key for a message's type is "type" [\#34](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/34) ([JarbasAl](https://github.com/JarbasAl))
+
+## [0.2.4a6](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.4a6) (2026-09-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.4a5...0.2.4a6)
+
+**Merged pull requests:**
+
+- Update dependency python to 3.14 [\#11](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/11) ([renovate[bot]](https://github.com/apps/renovate))
+
+## [0.2.4a5](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.4a5) (2026-09-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.4a4...0.2.4a5)
+
+**Merged pull requests:**
+
+- Update actions/checkout action to v7 [\#12](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/12) ([renovate[bot]](https://github.com/apps/renovate))
+
+## [0.2.4a4](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.4a4) (2026-09-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.4a3...0.2.4a4)
+
+**Merged pull requests:**
+
+- Update actions/deploy-pages action to v5 [\#15](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/15) ([renovate[bot]](https://github.com/apps/renovate))
+
+## [0.2.4a3](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.4a3) (2026-09-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.4a2...0.2.4a3)
+
+**Merged pull requests:**
+
+- Update actions/upload-pages-artifact action to v5 [\#17](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/17) ([renovate[bot]](https://github.com/apps/renovate))
+
+## [0.2.4a2](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.4a2) (2026-09-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.4a1...0.2.4a2)
+
+**Merged pull requests:**
+
+- Update actions/setup-python action to v7 [\#18](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/18) ([renovate[bot]](https://github.com/apps/renovate))
+
+## [0.2.4a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.4a1) (2026-09-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.3a1...0.2.4a1)
+
+**Merged pull requests:**
+
+- fix: scheduler message models mirror the real wire fields [\#26](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/26) ([JarbasAl](https://github.com/JarbasAl))
+
+## [0.2.3a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.3a1) (2026-09-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.2a1...0.2.3a1)
+
+**Merged pull requests:**
+
+- fix: model the real ovos.common\_play.status.response payload [\#25](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/25) ([JarbasAl](https://github.com/JarbasAl))
+
+## [0.2.2a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.2a1) (2026-08-15)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.1a1...0.2.2a1)
+
+**Merged pull requests:**
+
+- fix: ggwave confirmation models use the plugin's ovos-prefixed topics [\#23](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/23) ([JarbasAl](https://github.com/JarbasAl))
+
+## [0.2.1a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.1a1) (2026-08-02)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.0a3...0.2.1a1)
+
+**Merged pull requests:**
+
+- fix: publish alphas to PyPI on merge [\#21](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/21) ([JarbasAl](https://github.com/JarbasAl))
+
+## [0.2.0a3](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.0a3) (2026-07-31)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.0a2...0.2.0a3)
+
+**Merged pull requests:**
+
+- docs: rewrite README in Simplified Technical English [\#19](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/19) ([JarbasAl](https://github.com/JarbasAl))
+
+## [0.2.0a2](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.0a2) (2026-06-25)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.0a1...0.2.0a2)
+
+**Merged pull requests:**
+
+- chore: Configure Renovate [\#4](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/4) ([renovate[bot]](https://github.com/apps/renovate))
+
+## [0.2.0a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.0a1) (2026-06-25)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.1.2a1...0.2.0a1)
+
+**Merged pull requests:**
+
+- feat: coverage-gap pass — model 40 previously unmodeled bus message types [\#9](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/9) ([JarbasAl](https://github.com/JarbasAl))
+
+## [0.1.2a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.1.2a1) (2026-06-14)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.1.1...0.1.2a1)
+
+**Merged pull requests:**
+
+- docs: add NGI0 Commons Fund attribution [\#7](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/7) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
