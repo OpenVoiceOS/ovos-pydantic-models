@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.3.0a1) (2026-09-02)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.6a1...0.3.0a1)
+
+**Merged pull requests:**
+
+- feat: models for the ratified intent, pipeline and poll topics [\#38](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/38) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.2.6a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.2.6a1) (2026-09-01)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.5a1...0.2.6a1)
