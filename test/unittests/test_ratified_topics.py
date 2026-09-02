@@ -7,10 +7,6 @@ of the spec tables. The remaining payloads are shaped from the specification's
 own field tables.
 """
 import pytest
-from ovos_bus_client.message import Message
-from ovos_core.intent_services.dispatcher import IntentDispatcher
-from ovos_core.intent_services.manifest import IntentManifest
-from ovos_utils.fakebus import FakeBus
 from pydantic import ValidationError
 
 from ovos_pydantic_models.intents.converse import (
@@ -177,6 +173,14 @@ class TestIntentManifestQueries:
 
     @pytest.fixture
     def bus(self):
+        pytest.importorskip("ovos_bus_client")
+        pytest.importorskip("ovos_core")
+        pytest.importorskip("ovos_utils")
+        global Message, IntentManifest, FakeBus
+        from ovos_bus_client.message import Message
+        from ovos_core.intent_services.manifest import IntentManifest
+        from ovos_utils.fakebus import FakeBus
+
         bus = FakeBus()
         manifest = IntentManifest(bus)
         bus.emit(Message("ovos.intent.register.keyword", KEYWORD_REGISTRATION))
@@ -277,6 +281,14 @@ class TestHandlerTrio:
 
     @pytest.fixture
     def bus(self):
+        pytest.importorskip("ovos_bus_client")
+        pytest.importorskip("ovos_core")
+        pytest.importorskip("ovos_utils")
+        global Message, IntentDispatcher, FakeBus
+        from ovos_bus_client.message import Message
+        from ovos_core.intent_services.dispatcher import IntentDispatcher
+        from ovos_utils.fakebus import FakeBus
+
         bus = FakeBus()
         dispatcher = IntentDispatcher(bus, timeout=None)
         yield bus, dispatcher
