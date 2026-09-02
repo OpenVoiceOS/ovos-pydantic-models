@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.3.1a1) (2026-09-02)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.3.0a1...0.3.1a1)
+
+**Merged pull requests:**
+
+- fix: dependencies and lazy imports for the live-capture tests [\#40](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/40) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.3.0a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.3.0a1) (2026-09-02)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.2.6a1...0.3.0a1)
