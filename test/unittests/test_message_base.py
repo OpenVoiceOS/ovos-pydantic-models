@@ -101,6 +101,7 @@ class TestWireFormatAlias:
     not "message_type". A real ovos-bus-client Message must round-trip."""
 
     def test_bus_client_message_roundtrips_through_model(self):
+        pytest.importorskip("ovos_bus_client")
         from ovos_bus_client.message import Message
 
         wire = json.loads(Message("ovos.utterance.handled", {"x": 1}).serialize())
