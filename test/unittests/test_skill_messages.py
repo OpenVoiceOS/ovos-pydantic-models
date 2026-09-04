@@ -11,6 +11,7 @@ from ovos_pydantic_models.skills.ocp import (
     OvosCommonPlaySkillsDetachData, OvosCommonPlaySkillsDetachMessage,
     OvosCommonPlayRegisterKeywordData, OvosCommonPlayRegisterKeywordMessage,
     OvosCommonPlayStatusResponseData, OvosCommonPlayStatusResponseMessage,
+    OvosCommonPlaySeekData, OvosCommonPlaySeekMessage,
 )
 from ovos_pydantic_models.audio.ocp import OcpMediaState
 from ovos_pydantic_models.skills.game import (
@@ -211,3 +212,31 @@ class TestCommonQueryMessages:
         msg = QuestionQueryMessage(data=data)
         restored = QuestionQueryMessage.model_validate(msg.model_dump())
         assert restored.data.phrase == "test question"
+
+
+class TestOvosCommonPlaySeek:
+    def test_seek_value_only(self):
+        data = OvosCommonPlaySeekData(seekValue=120000)
+        msg = OvosCommonPlaySeekMessage(data=data)
+        assert msg.message_type == "ovos.common_play.seek"
+        assert msg.data.seekValue == 120000
+        assert msg.data.seconds is None
+
+    def test_seconds_only(self):
+        data = OvosCommonPlaySeekData(seconds=15)
+        assert data.seconds == 15
+        assert data.seekValue is None
+
+    def test_seconds_negative_seeks_backward(self):
+        data = OvosCommonPlaySeekData(seconds=-15)
+        assert data.seconds == -15
+
+    def test_neither_field_raises(self):
+        with pytest.raises(ValidationError):
+            OvosCommonPlaySeekData()
+
+    def test_both_fields_allowed_seek_value_wins(self):
+        # both may be present on the wire; seekValue takes precedence
+        data = OvosCommonPlaySeekData(seekValue=5000, seconds=-15)
+        assert data.seekValue == 5000
+        assert data.seconds == -15
