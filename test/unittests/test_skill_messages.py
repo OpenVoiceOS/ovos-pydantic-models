@@ -10,7 +10,10 @@ from ovos_pydantic_models.skills.ocp import (
     OvosCommonPlayQueryResponseData, OvosCommonPlayQueryResponseMessage,
     OvosCommonPlaySkillsDetachData, OvosCommonPlaySkillsDetachMessage,
     OvosCommonPlayRegisterKeywordData, OvosCommonPlayRegisterKeywordMessage,
+    OvosCommonPlayStatusResponseData, OvosCommonPlayStatusResponseMessage,
+    OvosCommonPlaySeekData, OvosCommonPlaySeekMessage,
 )
+from ovos_pydantic_models.audio.ocp import OcpMediaState
 from ovos_pydantic_models.skills.game import (
     SkillGameCommandData, SkillGameCommandMessage,
     OvosCommonPlaySkillPlayData, OvosCommonPlaySkillPlayMessage,
@@ -77,6 +80,44 @@ class TestOcpQueryMessages:
         data = OvosCommonPlayPlayerStateData(state=PlayerState.PLAYING)
         msg = OvosCommonPlayPlayerStateMessage(data=data)
         assert msg.data.state == PlayerState.PLAYING
+
+
+class TestOcpStatusResponse:
+    def test_ovos_media_snapshot(self):
+        # shape emitted by PlayerSnapshot.as_status_dict in ovos-media
+        payload = {
+            "playback_type": 2,
+            "media_type": 2,
+            "player_state": 1,
+            "loop_state": 0,
+            "media_state": 6,
+            "shuffle": False,
+            "playlist_position": 0,
+            "playlist_size": 3,
+            "title": "My Song",
+            "artist": "My Artist",
+            "image": "https://example.com/art.png",
+        }
+        data = OvosCommonPlayStatusResponseData(**payload)
+        msg = OvosCommonPlayStatusResponseMessage(data=data)
+        assert msg.message_type == "ovos.common_play.status.response"
+        assert msg.data.playback_type == 2
+        assert msg.data.media_type == 2
+        assert msg.data.player_state == 1
+        assert msg.data.loop_state == 0
+        assert msg.data.media_state == OcpMediaState.BUFFERED_MEDIA
+        assert isinstance(msg.data.media_state, OcpMediaState)
+        assert msg.data.shuffle is False
+        assert msg.data.playlist_position == 0
+        assert msg.data.playlist_size == 3
+        assert msg.data.title == "My Song"
+        assert msg.data.artist == "My Artist"
+        assert msg.data.image == "https://example.com/art.png"
+
+    def test_all_optional(self):
+        data = OvosCommonPlayStatusResponseData()
+        assert data.player_state is None
+        assert data.media_state is None
 
     def test_announce(self):
         data = OvosCommonPlayAnnounceData(
@@ -171,3 +212,31 @@ class TestCommonQueryMessages:
         msg = QuestionQueryMessage(data=data)
         restored = QuestionQueryMessage.model_validate(msg.model_dump())
         assert restored.data.phrase == "test question"
+
+
+class TestOvosCommonPlaySeek:
+    def test_seek_value_only(self):
+        data = OvosCommonPlaySeekData(seekValue=120000)
+        msg = OvosCommonPlaySeekMessage(data=data)
+        assert msg.message_type == "ovos.common_play.seek"
+        assert msg.data.seekValue == 120000
+        assert msg.data.seconds is None
+
+    def test_seconds_only(self):
+        data = OvosCommonPlaySeekData(seconds=15)
+        assert data.seconds == 15
+        assert data.seekValue is None
+
+    def test_seconds_negative_seeks_backward(self):
+        data = OvosCommonPlaySeekData(seconds=-15)
+        assert data.seconds == -15
+
+    def test_neither_field_raises(self):
+        with pytest.raises(ValidationError):
+            OvosCommonPlaySeekData()
+
+    def test_both_fields_allowed_seek_value_wins(self):
+        # both may be present on the wire; seekValue takes precedence
+        data = OvosCommonPlaySeekData(seekValue=5000, seconds=-15)
+        assert data.seekValue == 5000
+        assert data.seconds == -15

@@ -168,3 +168,54 @@ class OvosSkillsFallbackForceTimeoutMessage(OpenVoiceOSMessage):
     """
     message_type: str = "ovos.skills.fallback.force_timeout"
     data: OvosSkillsFallbackForceTimeoutData
+
+
+# --- OVOS-FALLBACK-1 §6.1 willingness contest ---
+
+class OvosFallbackPingData(BaseModel):
+    """The round's question — the utterance every fallback skill evaluates (FALLBACK-1 §6.1)."""
+    utterances: List[str] = Field(..., description="Candidate utterance list the skill should evaluate.")
+    lang: str = Field(..., description="Resolved BCP-47 language tag.")
+    model_config = ConfigDict(extra='allow')
+
+
+class OvosFallbackPingMessage(OpenVoiceOSMessage):
+    """Ask the whole fallback pool whether anyone will handle the utterance — OVOS-FALLBACK-1 §6.1.
+
+    One broadcast per round, derived from the utterance Message by reply. Every
+    registered fallback skill evaluates in parallel, so the round costs one
+    collection window rather than a sum of per-skill waits. This is where a
+    fallback skill does its real work — query a knowledge base, run a
+    classifier, call a model — and the reply carries only the decision.
+
+    ovos-core 3.2.0a1 and ovos-workshop 9.6.1a1 run this contest on
+    ``ovos.skills.fallback.ping`` / ``.pong`` instead
+    (ovos_core/intent_services/fallback_service.py:191,
+    ovos_workshop/skills/fallback.py:106).
+    """
+    message_type: str = "ovos.fallback.ping"
+    data: OvosFallbackPingData
+
+
+class OvosFallbackPongData(BaseModel):
+    """A fallback skill's answer to the round (FALLBACK-1 §6.1).
+
+    ``utterance`` says *what* the skill judged; the envelope's
+    ``utterance_id`` says *which round* the judgment belongs to.
+    """
+    skill_id: str = Field(..., description="Responding skill's identity.")
+    can_handle: bool = Field(..., description="Whether the skill is willing to handle this utterance.")
+    utterance: str = Field(..., description="Echo of the evaluated candidate — the first element of the ping's utterances.")
+    model_config = ConfigDict(extra='allow')
+
+
+class OvosFallbackPongMessage(OpenVoiceOSMessage):
+    """A fallback skill claims or declines the utterance — OVOS-FALLBACK-1 §6.1.
+
+    A skill should answer even when declining, so the window can close early
+    instead of waiting out the ceiling. Silence at window close, a mismatched
+    ``utterance_id``, or a missing or non-boolean ``can_handle`` all count as a
+    decline.
+    """
+    message_type: str = "ovos.fallback.pong"
+    data: OvosFallbackPongData

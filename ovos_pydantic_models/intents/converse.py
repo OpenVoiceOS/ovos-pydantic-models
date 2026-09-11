@@ -290,3 +290,60 @@ class ConversationalIntentMessage(OpenVoiceOSMessage):
     """
     message_type: str = Field(..., description="Dynamic: '{skill_id}.converse:{intent_name}'.")
     data: ConversationalIntentData = Field(default_factory=ConversationalIntentData, description="Extracted intent entities.")
+
+
+# --- OVOS-CONVERSE-1 §4.2 poll round-trip ---
+
+class ConverseErrorCode(str, Enum):
+    """Structured decline reasons for a converse pong (CONVERSE-1 §4.4)."""
+    TIMEOUT = "timeout"                # plugin-synthesised; never on the wire
+    NOT_ELIGIBLE = "not_eligible"      # owner no longer on the converse-handler list
+    HANDLER_ERROR = "handler_error"    # internal error prevented a decision
+    KILLED = "killed"                  # poll terminated by an interrupt signal
+    DONE = "done"                      # owner is finished and asks to be removed
+
+
+class OvosConversePingData(BaseModel):
+    """The round's question — the utterance every candidate evaluates (CONVERSE-1 §4.2)."""
+    utterances: List[str] = Field(..., description="Candidate utterance list, best first.")
+    lang: str = Field(..., description="BCP-47 tag of the active language.")
+    model_config = ConfigDict(extra='allow')
+
+
+class OvosConversePingMessage(OpenVoiceOSMessage):
+    """Poll the converse candidates for the round — OVOS-CONVERSE-1 §4.2.
+
+    One broadcast per round, derived from the utterance Message by reply so the
+    session travels with it. No candidate identity appears in the topic or the
+    payload: a skill decides it is a candidate by testing its own ``skill_id``
+    against ``context.session.converse_handlers``, which the derivation carries.
+    """
+    message_type: str = "ovos.converse.ping"
+    data: OvosConversePingData
+
+
+class OvosConversePongData(BaseModel):
+    """A candidate's answer to the round (CONVERSE-1 §4.2).
+
+    The claim boolean is named ``result`` here; the analogous polls of
+    OVOS-FALLBACK-1 and OVOS-STOP-1 call it ``can_handle`` and
+    OVOS-COMMON-QUERY-1 calls it ``can_answer``. Each name binds only inside
+    its own protocol.
+    """
+    skill_id: str = Field(..., description="Candidate answering — identity is payload, never topic.")
+    result: bool = Field(..., description="True claims the utterance; false declines.")
+    error_code: Optional[ConverseErrorCode] = Field(None, description="Structured reason for a decline.")
+    model_config = ConfigDict(extra='allow')
+
+
+class OvosConversePongMessage(OpenVoiceOSMessage):
+    """A candidate claims or declines the utterance — OVOS-CONVERSE-1 §4.2.
+
+    Only a skill named in the round's ``session.converse_handlers`` may answer,
+    and every named candidate should, since explicit declines are what let the
+    collection window close early. The plugin discards a pong whose
+    ``context.utterance_id`` differs from the round's: an answer that cannot
+    prove which question it answers never decides a round.
+    """
+    message_type: str = "ovos.converse.pong"
+    data: OvosConversePongData

@@ -75,7 +75,7 @@ activate_msg = SkillActivateMessage(
 deactivate_msg = SkillDeactivateMessage(message_type="my-skill.deactivate")
 ```
 
-Open models (`extra='allow'`) — skills may include arbitrary extra data.
+Open models (`extra='allow'`): skills may include arbitrary extra data.
 
 ---
 
@@ -95,7 +95,7 @@ from ovos_pydantic_models.intents.core import (
 |---|---|---|
 | `add_context` | `AddContextMessage` | `context` (str), `word` (str\|None), `origin` (str\|None) |
 | `remove_context` | `RemoveContextMessage` | `context` (str) |
-| `clear_context` | `ClearContextMessage` | — |
+| `clear_context` | `ClearContextMessage` | n/a |
 
 ---
 
@@ -126,7 +126,7 @@ from ovos_pydantic_models.intents.converse import (
 
 ### Enums
 
-**`ConverseMode`** — which skills may participate:
+**`ConverseMode`**: which skills may participate:
 
 | Value | String |
 |---|---|
@@ -134,7 +134,7 @@ from ovos_pydantic_models.intents.converse import (
 | `BLACKLIST` | `"blacklist"` |
 | `WHITELIST` | `"whitelist"` |
 
-**`ConverseActivationMode`** — when a skill may self-activate:
+**`ConverseActivationMode`**: when a skill may self-activate:
 
 | Value | String |
 |---|---|
@@ -151,7 +151,10 @@ from ovos_pydantic_models.intents.converse import (
 | `intent.service.skills.activated` | `IntentServiceSkillsActivatedMessage` | `skill_id` |
 | `intent.service.skills.deactivate` | `IntentServiceSkillsDeactivateMessage` | `skill_id` |
 | `intent.service.skills.deactivated` | `IntentServiceSkillsDeactivatedMessage` | `skill_id` |
-| `intent.service.active_skills.get` | `IntentServiceActiveSkillsGetMessage` | — |
+
+| Message type | Class | Key field |
+|---|---|---|
+| `intent.service.active_skills.get` | `IntentServiceActiveSkillsGetMessage` | n/a |
 | `intent.service.active_skills.reply` | `IntentServiceActiveSkillsReplyMessage` | `skills: list[str]` |
 
 ### Ping / Pong (service side)
@@ -237,9 +240,12 @@ from ovos_pydantic_models.intents.fallbacks import (
 | Message type | Class | Key fields |
 |---|---|---|
 | `ovos.skills.fallback.{skill_id}.request` | `OvosSkillsFallbackRequestMessage` | `skill_id`, `utterances`, `lang` |
-| `ovos.skills.fallback.{skill_id}.start` | `OvosSkillsFallbackStartMessage` | — |
+| `ovos.skills.fallback.{skill_id}.start` | `OvosSkillsFallbackStartMessage` | n/a |
 | `ovos.skills.fallback.{skill_id}.response` | `OvosSkillsFallbackResponseMessage` | `result: bool`, `fallback_handler \| None` |
 | `ovos.skills.fallback.{skill_id}.killed` | `OvosSkillsFallbackKilledMessage` | `error: str` |
+
+| Message type | Class | Key fields |
+|---|---|---|
 | `ovos.skills.fallback.force_timeout` | `OvosSkillsFallbackForceTimeoutMessage` | `skill_id` |
 
 ---
@@ -261,14 +267,20 @@ from ovos_pydantic_models.intents.stop import (
 
 | Message type | Class | Key fields |
 |---|---|---|
-| `stop:global` | `StopGlobalMessage` | — |
+| `stop:global` | `StopGlobalMessage` | n/a |
 | `stop:skill` | `StopSkillMessage` | `skill_id` |
-| `mycroft.stop` | `MycroftStopMessage` | — |
+| `mycroft.stop` | `MycroftStopMessage` | n/a |
 | `mycroft.stop.handled` | `MycroftStopHandledMessage` | `by: str` |
+
+| Message type | Class | Key fields |
+|---|---|---|
 | `mycroft.audio.speech.stop` | `MycroftAudioSpeechStopMessage` | `skill_id \| None` |
 | `{skill_id}.stop.ping` | `SkillStopPingMessage` | `skill_id` |
 | `skill.stop.pong` | `SkillStopPongMessage` | `skill_id`, `can_handle: bool` |
-| `{skill_id}.stop` | `SkillStopRequestMessage` | — |
+| `{skill_id}.stop` | `SkillStopRequestMessage` | n/a |
+
+| Message type | Class | Key fields |
+|---|---|---|
 | `{skill_id}.stop.response` | `SkillStopResponseMessage` | `result: bool`, `error \| None` |
 | `mycroft.skills.abort_question` | `MycroftSkillsAbortQuestionMessage` | `skill_id` |
 | `mycroft.skills.abort_execution` | `MycroftSkillsAbortExecutionMessage` | `skill_id` (used by `@killable_intent`) |
@@ -277,7 +289,7 @@ from ovos_pydantic_models.intents.stop import (
 
 ## Adapt Pipeline ↩ legacy
 
-> **Legacy** — Adapt is the keyword-based intent engine, superseded by Padacioso and ML-based pipeline plugins. These messages are still handled by `ovos-adapt-pipeline-plugin` but new skills should use `@intent_file_handler` (Padacioso) instead.
+> **Legacy**: Adapt is the keyword-based intent engine, superseded by Padacioso and ML-based pipeline plugins. These messages are still handled by `ovos-adapt-pipeline-plugin`, but new skills should use `@intent_file_handler` (Padacioso) instead.
 
 ```python
 from ovos_pydantic_models.intents.adapt import (
@@ -309,6 +321,9 @@ from ovos_pydantic_models.intents.adapt import (
 | `intent.service.adapt.reply` | `IntentServiceAdaptReplyMessage` | Reply with matched intent or `None` |
 | `intent.service.adapt.manifest.get` | `IntentServiceAdaptManifestGetMessage` | Request all registered Adapt intents |
 | `intent.service.adapt.manifest` | `IntentServiceAdaptManifestMessage` | Reply with list of intent parsers |
+
+| Message type | Class | Description |
+|---|---|---|
 | `intent.service.adapt.vocab.manifest.get` | `IntentServiceAdaptVocabManifestGetMessage` | Request all registered vocabulary |
 | `intent.service.adapt.vocab.manifest` | `IntentServiceAdaptVocabManifestMessage` | Reply with vocabulary entries |
 
@@ -316,7 +331,7 @@ from ovos_pydantic_models.intents.adapt import (
 
 ## Padatious Pipeline ↩ legacy
 
-> **Legacy** — Padatious (ML intent matching) is superseded by Padacioso, which uses the same message protocol. These messages are still functional but Padacioso is preferred.
+> **Legacy**: Padatious (ML intent matching) is superseded by Padacioso, which uses the same message protocol. These messages are still functional, but Padacioso is preferred.
 
 ```python
 from ovos_pydantic_models.intents.padatious import (
@@ -336,8 +351,8 @@ from ovos_pydantic_models.intents.padatious import (
 |---|---|---|
 | `padatious:register_intent` | `PadatiousRegisterIntentMessage` | `skill_id`, `name`, `file_name \| samples`, `lang` |
 | `padatious:register_entity` | `PadatiousRegisterEntityMessage` | `skill_id`, `name`, `file_name \| samples`, `lang` |
-| `mycroft.skills.train` | `MycroftSkillsTrainMessage` | — (trigger retraining) |
-| `mycroft.skills.trained` | `MycroftSkillsTrainedMessage` | — (training complete) |
+| `mycroft.skills.train` | `MycroftSkillsTrainMessage` | n/a (trigger retraining) |
+| `mycroft.skills.trained` | `MycroftSkillsTrainedMessage` | n/a (training complete) |
 
 ### Introspection / Diagnostic
 
@@ -347,5 +362,11 @@ from ovos_pydantic_models.intents.padatious import (
 | `intent.service.padatious.reply` | `IntentServicePadatiousReplyMessage` | Reply with matched intent or `None` |
 | `intent.service.padatious.manifest.get` | `IntentServicePadatiousManifestGetMessage` | Request all registered intent names |
 | `intent.service.padatious.manifest` | `IntentServicePadatiousManifestMessage` | Reply with `intents: list[str]` |
+
+| Message type | Class | Description |
+|---|---|---|
 | `intent.service.padatious.entities.manifest.get` | `IntentServicePadatiousEntitiesManifestGetMessage` | Request all registered entities |
 | `intent.service.padatious.entities.manifest` | `IntentServicePadatiousEntitiesManifestMessage` | Reply with entity list |
+
+---
+[← OCP](ocp.md) · [Home](index.md) · [Skill manager →](skill-manager.md)

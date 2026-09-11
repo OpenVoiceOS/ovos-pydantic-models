@@ -39,7 +39,7 @@ Routing context attached to every message. Allows extra fields (open model).
 | `destination` | `str \| list[str] \| None` | `None` | Target(s). `None` = broadcast to all. |
 | `session` | `Session \| None` | `None` | Embedded session context |
 
-Extra fields are allowed — the bus adds arbitrary keys like `skill_id`, `ident`, etc., which are preserved on deserialization.
+Extra fields are allowed. The bus adds arbitrary keys like `skill_id` and `ident`, and these are preserved on deserialization.
 
 ---
 
@@ -57,18 +57,30 @@ Represents a user's conversational session. Carried in `MessageContext.session`.
 | `expiration_seconds` | `int` | `-1` | TTL in seconds (-1 = no expiry) |
 | `active_skills` | `list[tuple[str, float]]` | `[]` | Skills currently active with their last-activation timestamp |
 | `utterance_states` | `dict[str, UtteranceState]` | `{}` | Per-skill utterance state (`INTENT` or `RESPONSE`) |
+
+| Field | Type | Default | Description |
+|---|---|---|---|
 | `lang` | `str` | `"en-us"` | Session language |
-| `context` | `IntentContextManager` | — | Conversational context frame stack |
+| `context` | `IntentContextManager` | n/a | Conversational context frame stack |
 | `site_id` | `str` | `"unknown"` | Physical location / device identifier |
 | `pipeline` | `list[str]` | default pipeline | Ordered intent pipeline stages |
+
+| Field | Type | Default | Description |
+|---|---|---|---|
 | `location_preferences` | `dict` | `{}` | User location preferences |
 | `system_unit` | `str` | `"metric"` | `"metric"` or `"imperial"` |
 | `time_format` | `str` | `"full"` | Time display format |
 | `date_format` | `str` | `"DMY"` | Date display format |
+
+| Field | Type | Default | Description |
+|---|---|---|---|
 | `is_speaking` | `bool` | `False` | Device is currently speaking |
 | `is_recording` | `bool` | `False` | Device is currently recording |
 | `blacklisted_intents` | `list[str]` | `[]` | Intents blocked for this session |
 | `blacklisted_skills` | `list[str]` | `[]` | Skills blocked for this session |
+
+| Field | Type | Default | Description |
+|---|---|---|---|
 | `touch_time` | `int` | `time.time()` | Timestamp of last interaction |
 
 ### UtteranceState
@@ -76,8 +88,8 @@ Represents a user's conversational session. Carried in `MessageContext.session`.
 ```python
 from ovos_pydantic_models.session import UtteranceState
 
-UtteranceState.INTENT    # "intent"   — skill expects a new intent
-UtteranceState.RESPONSE  # "response" — skill is waiting for a get_response() answer
+UtteranceState.INTENT    # "intent": skill expects a new intent
+UtteranceState.RESPONSE  # "response": skill is waiting for a get_response() answer
 ```
 
 ---
@@ -96,6 +108,9 @@ Manages the conversational context frame stack inside a session.
 | `frame_stack` | `list[tuple[IntentContextManagerFrame, float]]` | `[]` | Stack of (frame, timestamp) pairs |
 | `context_keywords` | `list[str]` | `[]` | Keywords that trigger context extraction |
 | `context_max_frames` | `int` | `3` | Max frames to retain |
+
+| Field | Type | Default | Description |
+|---|---|---|---|
 | `context_greedy` | `bool` | `False` | If `True`, all entities update context |
 
 ### IntentContextManagerFrame
@@ -133,3 +148,6 @@ raw = ctx.model_dump()
 restored = MessageContext.model_validate(raw)
 assert restored.session.lang == "de-de"
 ```
+
+---
+[← Developer guide](developer-guide.md) · [Home](index.md) · [Listener →](listener.md)

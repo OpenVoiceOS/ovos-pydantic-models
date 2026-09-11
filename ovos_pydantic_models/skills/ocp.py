@@ -1,9 +1,10 @@
 from typing import Dict, Any, List, Optional, Union
 from enum import Enum
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 
 from ovos_pydantic_models.message import OpenVoiceOSMessage, MessageContext
 from ovos_pydantic_models.session import Session
+from ovos_pydantic_models.audio.ocp import OcpMediaState
 
 
 class MediaType(str, Enum):
@@ -598,15 +599,23 @@ class OvosCommonPlayPreviousMessage(OpenVoiceOSMessage):
 
 
 class OvosCommonPlaySeekData(BaseModel):
-    """Absolute seek target for the OCP player."""
-    position: int = Field(..., description="Seek position in milliseconds.")
+    """Seek target for the OCP player, as an absolute position or a relative offset."""
+    seekValue: Optional[float] = Field(None, description="Absolute position to seek to, in milliseconds. Takes precedence over `seconds` when both are present.")
+    seconds: Optional[float] = Field(None, description="Signed offset from the current position, in seconds. Negative values seek backward.")
+
+    @model_validator(mode='after')
+    def check_seek_value_or_seconds(self):
+        if self.seekValue is None and self.seconds is None:
+            raise ValueError("Either 'seekValue' or 'seconds' must be provided.")
+        return self
 
 
 class OvosCommonPlaySeekMessage(OpenVoiceOSMessage):
-    """Seek the OCP player to an absolute position in the current track.
+    """Seek the OCP player to an absolute position, or by a relative offset, in the current track.
 
     Emitted by skills implementing voice-controlled seek ('jump to two
-    minutes in'). OCP forwards the seek to the active backend.
+    minutes in') and by `OCPInterface.seek_forward`/`seek_backward`. OCP
+    forwards the seek to the active backend.
     """
     message_type: str = "ovos.common_play.seek"
     data: OvosCommonPlaySeekData
@@ -889,17 +898,34 @@ class OvosCommonPlayStatusMessage(OpenVoiceOSMessage):
 
 
 class OvosCommonPlayStatusResponseData(BaseModel):
-    """Full OCP player status including state and currently playing entry."""
-    state: Optional[PlayerState] = None
-    media: Optional[Union[MediaEntry, Dict[str, Any]]] = None
+    """Snapshot of the ovos-media player, as broadcast by its daemon.
+
+    `playback_type`, `media_type`, `player_state`, and `loop_state` carry the
+    raw wire values of the `PlaybackType`, `MediaType`, `PlayerState`, and
+    `LoopState` int enums from `ovos_utils.ocp` — a different, numeric
+    vocabulary from the str enums of the same name defined in this module.
+    `media_state` matches `OcpMediaState` (`audio/ocp.py`) exactly.
+    """
+    playback_type: Optional[int] = None
+    media_type: Optional[int] = None
+    player_state: Optional[int] = None
+    loop_state: Optional[int] = None
+    media_state: Optional[OcpMediaState] = None
+    shuffle: Optional[bool] = None
+    playlist_position: Optional[int] = None
+    playlist_size: Optional[int] = None
+    title: Optional[str] = None
+    artist: Optional[str] = None
+    image: Optional[str] = None
     model_config = ConfigDict(extra='allow')
 
 
 class OvosCommonPlayStatusResponseMessage(OpenVoiceOSMessage):
-    """Return the full OCP player status.
+    """Return the full ovos-media player status.
 
-    Emitted by OCP in response to `ovos.common_play.status`. Includes the
-    current `PlayerState` and the active `MediaEntry` (if any).
+    Emitted by the ovos-media player daemon in response to
+    `ovos.common_play.status`. Consumed by the OCP pipeline plugin and by
+    GUIs/clients that need to initialize their now-playing display.
     """
     message_type: str = "ovos.common_play.status.response"
     data: OvosCommonPlayStatusResponseData
@@ -1119,3 +1145,56 @@ class OvosCommonPlaySeiGetResponseMessage(OpenVoiceOSMessage):
     """
     message_type: str = "ovos.common_play.SEI.get.response"
     data: OvosCommonPlaySeiGetResponseData
+
+
+# --- OCP response messages (not previously modeled) ---
+
+class OvosCommonPlayGetTrackLengthResponseMessage(OpenVoiceOSMessage):
+    """Reply to a track-length query from OCP.
+
+    Emitted by the active media backend in reply to
+    ``ovos.common_play.get_track_length``. Carries the duration in
+    milliseconds.
+    """
+    message_type: str = "ovos.common_play.get_track_length.response"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosCommonPlayGetTrackPositionResponseMessage(OpenVoiceOSMessage):
+    """Reply to a track-position query from OCP.
+
+    Emitted by the active media backend in reply to
+    ``ovos.common_play.get_track_position``. Carries the current playback
+    position in milliseconds.
+    """
+    message_type: str = "ovos.common_play.get_track_position.response"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosCommonPlayListBackendsResponseMessage(OpenVoiceOSMessage):
+    """Reply carrying the list of available OCP audio backends.
+
+    Emitted by ovos-media in reply to ``ovos.common_play.list_backends``.
+    """
+    message_type: str = "ovos.common_play.list_backends.response"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosCommonPlayMprisNowPlayingMessage(OpenVoiceOSMessage):
+    """Broadcast current playback state to MPRIS consumers.
+
+    Emitted by ovos-media whenever the now-playing track or playback state
+    changes, allowing MPRIS-based clients (system media controls, desktop
+    widgets) to stay in sync.
+    """
+    message_type: str = "ovos.common_play.mpris.now_playing"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosCommonPlayPongMessage(OpenVoiceOSMessage):
+    """Heartbeat reply confirming OCP / ovos-media is alive.
+
+    Emitted by ovos-media in reply to ``ovos.common_play.ping``.
+    """
+    message_type: str = "ovos.common_play.pong"
+    data: Dict[str, Any] = Field(default_factory=dict)

@@ -19,6 +19,7 @@ jobs:
       publish_prerelease: true
       propose_release: true
       changelog_max_issues: 100
+      publish_pypi: true
 
   notify:
     if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'

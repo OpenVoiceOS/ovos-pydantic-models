@@ -7,20 +7,20 @@ from ovos_pydantic_models.message import OpenVoiceOSMessage
 
 class SchedulerScheduleEventData(BaseModel):
     """Payload for registering a future timed event."""
-    name: str = Field(..., description="Unique name for the scheduled event.")
-    when: float = Field(..., description="Unix timestamp when to fire the event.")
-    data: Dict[str, Any] = Field(default_factory=dict, description="Payload passed back to the skill handler.")
-    context: Dict[str, Any] = Field(default_factory=dict, description="Context to include when the event fires.")
-    repeat_interval: Optional[float] = Field(None, description="If set, repeat every N seconds.")
+    event: str = Field(..., description="Message type to emit when the event fires.")
+    time: float = Field(..., description="Unix timestamp when to fire the event.")
+    repeat: Optional[float] = Field(None, description="If set, repeat every N seconds.")
+    data: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Payload passed back to the skill handler.")
 
 
 class SchedulerScheduleEventMessage(OpenVoiceOSMessage):
     """Register a future event with the OVOS event scheduler.
 
     Emitted by skills via `self.schedule_event()`. The scheduler service
-    (running in `ovos-core`) fires a bus message with the given `name` as
-    the message type at the specified Unix timestamp. If `repeat_interval`
-    is set the event fires repeatedly until cancelled.
+    (running in `ovos-core`) fires a bus message with the given `event` as
+    the message type at the specified Unix timestamp. If `repeat` is set
+    the event fires repeatedly until cancelled. Message context is passed
+    through unchanged and is not part of the payload.
     """
     message_type: str = "mycroft.scheduler.schedule_event"
     data: SchedulerScheduleEventData
@@ -28,7 +28,7 @@ class SchedulerScheduleEventMessage(OpenVoiceOSMessage):
 
 class SchedulerRemoveEventData(BaseModel):
     """Payload for cancelling a scheduled event by name."""
-    name: str = Field(..., description="Name of the event to remove.")
+    event: str = Field(..., description="Message type of the event to remove.")
 
 
 class SchedulerRemoveEventMessage(OpenVoiceOSMessage):
@@ -44,7 +44,7 @@ class SchedulerRemoveEventMessage(OpenVoiceOSMessage):
 
 class SchedulerUpdateEventData(BaseModel):
     """Payload for updating the data associated with a scheduled event."""
-    name: str = Field(..., description="Name of the event to update.")
+    event: str = Field(..., description="Message type of the event to update.")
     data: Dict[str, Any] = Field(default_factory=dict, description="New payload data for the event.")
 
 
@@ -81,4 +81,17 @@ class SchedulerListEventsMessage(OpenVoiceOSMessage):
     with all registered event names, firing times, and repeat intervals.
     """
     message_type: str = "mycroft.scheduler.list_events"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class SchedulerUpdateEventLegacyMessage(OpenVoiceOSMessage):
+    """Update a pending scheduled event (legacy bus-client path).
+
+    Emitted by ``ovos_bus_client.apis.events.EventSchedulerInterface``
+    via ``message.forward('mycroft.schedule.update_event', data)``.
+    Note: the canonical spelling used by the scheduler service itself
+    is ``mycroft.scheduler.update_event`` (see ``SchedulerUpdateEventMessage``);
+    this legacy form is used by the bus-client API helper.
+    """
+    message_type: str = "mycroft.schedule.update_event"
     data: Dict[str, Any] = Field(default_factory=dict)

@@ -1,8 +1,8 @@
-# OCP — OVOS Common Play
+# OCP: OVOS Common Play
 
 OCP is the OVOS media playback framework. It coordinates between OCP skills (which supply media results) and the OCP player (which handles playback). OCP messages live in their own **OCP** category in the interactive reference.
 
-> **Beta** — `ovos-media` (the OCP player) is still pre-release (`0.0.1a*`). The `audio.video_service` and `audio.web_service` sub-protocols are also beta.
+> **Beta**: `ovos-media` (the OCP player) is still pre-release (`0.0.1a*`). The `audio.video_service` and `audio.web_service` sub-protocols are also beta.
 
 ---
 
@@ -34,14 +34,23 @@ from ovos_pydantic_models.skills.ocp import (
 | `AUDIO` | `"audio"` |
 | `MUSIC` | `"music"` |
 | `VIDEO` | `"video"` |
+
+| Value | String |
+|---|---|
 | `SILENCE` | `"silence"` |
 | `PODCAST` | `"podcast"` |
 | `RADIO` | `"radio"` |
 | `NEWS` | `"news"` |
+
+| Value | String |
+|---|---|
 | `AD` | `"advertisement"` |
 | `ANNOUNCEMENT` | `"announcement"` |
 | `COMMUNICATION` | `"communication"` |
 | `ALARM` | `"alarm"` |
+
+| Value | String |
+|---|---|
 | `TIMER` | `"timer"` |
 | `NOTIFICATION` | `"notification"` |
 | `GAME` | `"game"` |
@@ -64,6 +73,9 @@ from ovos_pydantic_models.skills.ocp import (
 | `PLAYING` | `"playing"` |
 | `PAUSED` | `"paused"` |
 | `LOADING` | `"loading"` |
+
+| Value | String |
+|---|---|
 | `BUFFERING` | `"buffering"` |
 
 ### MediaState (OCP pipeline state)
@@ -74,6 +86,9 @@ from ovos_pydantic_models.skills.ocp import (
 | `LOADING` | `"loading"` |
 | `PLAYING` | `"playing"` |
 | `PAUSED` | `"paused"` |
+
+| Value | String |
+|---|---|
 | `STOPPED` | `"stopped"` |
 | `END_OF_STREAM` | `"eos"` |
 | `BUFFERING` | `"buffering"` |
@@ -89,6 +104,9 @@ from ovos_pydantic_models.skills.ocp import (
 | `VERY_HIGH` | `0.9` |
 | `HIGH` | `0.8` |
 | `AVERAGE` | `0.5` |
+
+| Value | Float |
+|---|---|
 | `LOW` | `0.3` |
 | `NO_MATCH` | `0.0` |
 
@@ -127,10 +145,16 @@ entry = MediaEntry(
 | `title` | `str \| None` | `None` | Track title |
 | `artist` | `str \| None` | `None` | Artist name |
 | `album` | `str \| None` | `None` | Album name |
+
+| Field | Type | Default | Description |
+|---|---|---|---|
 | `image` | `str \| None` | `None` | Artwork URL |
 | `playback` | `PlaybackType` | `AUDIO` | How this media is rendered |
 | `match_confidence` | `MatchConfidence` | `AVERAGE` | How well this result matches the query |
 | `media_type` | `MediaType` | `GENERIC` | Type of media |
+
+| Field | Type | Default | Description |
+|---|---|---|---|
 | `skill_id` | `str \| None` | `None` | Owning skill |
 | `length` | `int \| None` | `None` | Duration in milliseconds |
 | `position` | `int \| None` | `None` | Current position in milliseconds |
@@ -162,6 +186,9 @@ playlist = Playlist(
 | `author` | `str \| None` | `None` |
 | `image` | `str \| None` | `None` |
 | `thumbnail` | `str \| None` | `None` |
+
+| Field | Type | Default |
+|---|---|---|
 | `url` | `str \| None` | `None` |
 | `entries` | `list[MediaEntry]` | `[]` |
 
@@ -200,6 +227,9 @@ Skills send this back with their results. `searching=True` allows streaming part
 | `skill_id` | `str` | required | Responding skill |
 | `skill_name` | `str` | required | Skill display name |
 | `thumbnail` | `str` | required | Skill icon |
+
+| Field | Type | Default | Description |
+|---|---|---|---|
 | `results` | `list[MediaEntry \| Playlist \| PluginStream]` | `[]` | Found results |
 | `searching` | `bool` | required | `True` if still searching |
 | `timeout` | `float \| None` | `None` | Optional timeout extension |
@@ -208,14 +238,20 @@ Skills send this back with their results. `searching=True` allows streaming part
 
 | Message type | Class | Description |
 |---|---|---|
-| `ovos.common_play.search` | `OvosCommonPlaySearchMessage` | Initiate a new search |
+| `ovos.common_play.search` | `OvosCommonPlaySearchMessage` | Start a new search |
 | `ovos.common_play.play_search` | `OvosCommonPlayPlaySearchMessage` | Search and immediately play best result |
 | `ovos.common_play.search.start` | `OvosCommonPlaySearchStartMessage` | OCP signals search phase started |
 | `ovos.common_play.search.end` | `OvosCommonPlaySearchEndMessage` | OCP signals search phase ended |
+
+| Message type | Class | Description |
+|---|---|---|
 | `ovos.common_play.search.stop` | `OvosCommonPlaySearchStopMessage` | Abort all ongoing searches |
 | `ovos.common_play.search.populate` | `OvosCommonPlaySearchPopulateMessage` | Push results into GUI list |
 | `ovos.common_play.search.play` | `OvosCommonPlaySearchPlayMessage` | Play a result from the search list |
 | `ovos.common_play.skill.search_start` | `OvosCommonPlaySkillSearchStartMessage` | Skill signals its search started |
+
+| Message type | Class | Description |
+|---|---|---|
 | `ovos.common_play.skill.search_end` | `OvosCommonPlaySkillSearchEndMessage` | Skill signals its search done |
 
 ---
@@ -228,24 +264,36 @@ Global OCP player commands:
 |---|---|---|
 | `ovos.common_play.play` | `OvosCommonPlayPlayMessage` | `media`, `disambiguation`, `playlist` |
 | `ovos.common_play.simple.play` | `OvosCommonPlaySimplePlayMessage` | `uri`, `mime_type` |
-| `ovos.common_play.pause` | `OvosCommonPlayPauseMessage` | — |
-| `ovos.common_play.resume` | `OvosCommonPlayResumeMessage` | — |
-| `ovos.common_play.stop` | `OvosCommonPlayStopMessage` | — |
+| `ovos.common_play.pause` | `OvosCommonPlayPauseMessage` | n/a |
+| `ovos.common_play.resume` | `OvosCommonPlayResumeMessage` | n/a |
+
+| Message type | Class | Key data |
+|---|---|---|
+| `ovos.common_play.stop` | `OvosCommonPlayStopMessage` | n/a |
 | `ovos.common_play.stop.response` | `OvosCommonPlayStopResponseMessage` | `result: bool` |
-| `ovos.common_play.next` | `OvosCommonPlayNextMessage` | — |
-| `ovos.common_play.previous` | `OvosCommonPlayPreviousMessage` | — |
-| `ovos.common_play.play_pause` | `OvosCommonPlayPlayPauseMessage` | — |
+| `ovos.common_play.next` | `OvosCommonPlayNextMessage` | n/a |
+| `ovos.common_play.previous` | `OvosCommonPlayPreviousMessage` | n/a |
+
+| Message type | Class | Key data |
+|---|---|---|
+| `ovos.common_play.play_pause` | `OvosCommonPlayPlayPauseMessage` | n/a |
 | `ovos.common_play.seek` | `OvosCommonPlaySeekMessage` | `position: int` (ms) |
 | `ovos.common_play.set_track_position` | `OvosCommonPlaySetTrackPositionMessage` | `position: int` |
-| `ovos.common_play.get_track_position` | `OvosCommonPlayGetTrackPositionMessage` | — |
-| `ovos.common_play.get_track_length` | `OvosCommonPlayGetTrackLengthMessage` | — |
+| `ovos.common_play.get_track_position` | `OvosCommonPlayGetTrackPositionMessage` | n/a |
+
+| Message type | Class | Key data |
+|---|---|---|
+| `ovos.common_play.get_track_length` | `OvosCommonPlayGetTrackLengthMessage` | n/a |
 | `ovos.common_play.playback_time` | `OvosCommonPlayPlaybackTimeMessage` | `position`, `length` |
-| `ovos.common_play.home` | `OvosCommonPlayHomeMessage` | — |
-| `ovos.common_play.ping` | `OvosCommonPlayPingMessage` | — |
-| `ovos.common_play.duck` | `OvosCommonPlayDuckMessage` | — |
-| `ovos.common_play.unduck` | `OvosCommonPlayUnduckMessage` | — |
-| `ovos.common_play.cork` | `OvosCommonPlayCorkMessage` | — |
-| `ovos.common_play.uncork` | `OvosCommonPlayUncorkMessage` | — |
+| `ovos.common_play.home` | `OvosCommonPlayHomeMessage` | n/a |
+| `ovos.common_play.ping` | `OvosCommonPlayPingMessage` | n/a |
+
+| Message type | Class | Key data |
+|---|---|---|
+| `ovos.common_play.duck` | `OvosCommonPlayDuckMessage` | n/a |
+| `ovos.common_play.unduck` | `OvosCommonPlayUnduckMessage` | n/a |
+| `ovos.common_play.cork` | `OvosCommonPlayCorkMessage` | n/a |
+| `ovos.common_play.uncork` | `OvosCommonPlayUncorkMessage` | n/a |
 
 ---
 
@@ -259,6 +307,9 @@ OCP routes these to the specific skill currently playing:
 | `ovos.common_play.{skill_id}.pause` | `OvosCommonPlaySkillPauseMessage` | Pause |
 | `ovos.common_play.{skill_id}.resume` | `OvosCommonPlaySkillResumeMessage` | Resume |
 | `ovos.common_play.{skill_id}.next` | `OvosCommonPlaySkillNextMessage` | Next track |
+
+| Format | Class | Description |
+|---|---|---|
 | `ovos.common_play.{skill_id}.previous` | `OvosCommonPlaySkillPreviousMessage` | Previous track |
 | `ovos.common_play.{skill_id}.stop` | `OvosCommonPlaySkillStopMessage` | Stop |
 
@@ -280,11 +331,17 @@ OCP routes these to the specific skill currently playing:
 | `ovos.common_play.media.state` | `OvosCommonPlayMediaStateMessage` | `state: MediaState` |
 | `ovos.common_play.track.state` | `OvosCommonPlayTrackStateMessage` | `state: TrackState` |
 | `ovos.common_play.player.status` | `OvosCommonPlayPlayerStatusMessage` | full status dict |
-| `ovos.common_play.status` | `OvosCommonPlayStatusMessage` | — (request) |
-| `ovos.common_play.status.response` | `OvosCommonPlayStatusResponseMessage` | `state`, `media`, etc. |
-| `ovos.common_play.track_info` | `OvosCommonPlayTrackInfoMessage` | — (request) |
+
+| Message type | Class | Key data |
+|---|---|---|
+| `ovos.common_play.status` | `OvosCommonPlayStatusMessage` | n/a (request) |
+| `ovos.common_play.status.response` | `OvosCommonPlayStatusResponseMessage` | `player_state`, `media_state`, `media_type`, `title`, `artist`, etc. |
+| `ovos.common_play.track_info` | `OvosCommonPlayTrackInfoMessage` | n/a (request) |
 | `ovos.common_play.track_info.response` | `OvosCommonPlayTrackInfoResponseMessage` | `MediaEntry` fields |
-| `ovos.common_play.list_backends` | `OvosCommonPlayListBackendsMessage` | — |
+
+| Message type | Class | Key data |
+|---|---|---|
+| `ovos.common_play.list_backends` | `OvosCommonPlayListBackendsMessage` | n/a |
 
 ---
 
@@ -296,6 +353,9 @@ OCP routes these to the specific skill currently playing:
 | `ovos.common_play.repeat.unset` | `OvosCommonPlayRepeatUnsetMessage` |
 | `ovos.common_play.repeat.toggle` | `OvosCommonPlayRepeatToggleMessage` |
 | `ovos.common_play.shuffle.set` | `OvosCommonPlayShuffleSetMessage` |
+
+| Message type | Class |
+|---|---|
 | `ovos.common_play.shuffle.unset` | `OvosCommonPlayShuffleUnsetMessage` |
 | `ovos.common_play.shuffle.toggle` | `OvosCommonPlayShuffleToggleMessage` |
 
@@ -307,8 +367,8 @@ OCP routes these to the specific skill currently playing:
 |---|---|---|
 | `ovos.common_play.playlist.queue` | `OvosCommonPlayPlaylistQueueMessage` | `MediaEntry` |
 | `ovos.common_play.playlist.set` | `OvosCommonPlayPlaylistSetMessage` | `list[MediaEntry]` |
-| `ovos.common_play.playlist.clear` | `OvosCommonPlayPlaylistClearMessage` | — |
-| `ovos.common_play.playlist.play` | `OvosCommonPlayPlaylistPlayMessage` | — |
+| `ovos.common_play.playlist.clear` | `OvosCommonPlayPlaylistClearMessage` | n/a |
+| `ovos.common_play.playlist.play` | `OvosCommonPlayPlaylistPlayMessage` | n/a |
 
 ---
 
@@ -318,7 +378,7 @@ OCP routes these to the specific skill currently playing:
 |---|---|---|
 | `ovos.common_play.like` | `OvosCommonPlayLikeMessage` | `MediaEntry` fields |
 | `ovos.common_play.unlike` | `OvosCommonPlayUnlikeMessage` | `MediaEntry` fields |
-| `ovos.common_play.liked_tracks.play` | `OvosCommonPlayLikedTracksPlayMessage` | — |
+| `ovos.common_play.liked_tracks.play` | `OvosCommonPlayLikedTracksPlayMessage` | n/a |
 
 ---
 
@@ -344,6 +404,9 @@ msg = OvosCommonPlayAnnounceMessage(
 | `ovos.common_play.skills.get` | `OvosCommonPlaySkillsGetMessage` | Request list of registered OCP skills |
 | `ovos.common_play.skills.detach` | `OvosCommonPlaySkillsDetachMessage` | Skill detaches from OCP |
 | `ovos.common_play.featured_tracks.play` | `OvosCommonPlayFeaturedTracksPlayMessage` | Play featured tracks for a skill |
+
+| Message type | Class | Description |
+|---|---|---|
 | `ovos.common_play.skill.play` | `OvosCommonPlaySkillPlayMessage` | Fixed-type play for game skills |
 
 ---
@@ -376,6 +439,9 @@ msg = OvosCommonPlayRegisterKeywordMessage(
 | `label` | `str` | Slot label (e.g. `"artist_name"`, `"movie_name"`) |
 | `media_type` | `MediaType` | Associated media type |
 | `samples` | `list[str] \| None` | Example keyword values |
+
+| Field | Type | Description |
+|---|---|---|
 | `csv` | `str \| None` | Path to CSV file with many samples |
 
 ---
@@ -391,7 +457,7 @@ msg = OvosCommonPlayRegisterKeywordMessage(
 
 ## Common Query Skill (CQS) Protocol
 
-Separate from OCP — for skills that answer factual questions.
+Separate from OCP. For skills that answer factual questions.
 
 ```python
 from ovos_pydantic_models.skills.common_query import (
@@ -428,6 +494,9 @@ query = QuestionQueryMessage(
 | `skill_id` | `str` | required | Responding skill |
 | `searching` | `bool` | required | Still searching? |
 | `answer` | `str \| None` | `None` | Speakable answer |
+
+| Field | Type | Default | Description |
+|---|---|---|---|
 | `handles_speech` | `bool \| None` | `None` | Skill handled its own speech |
 | `callback_data` | `dict \| None` | `None` | Passed to `CQS_action` |
 | `conf` | `float \| None` | `None` | Confidence (0.0–1.0) |
@@ -448,3 +517,6 @@ Sent to the winning skill after selection, triggering `CQS_action`.
 |---|---|
 | `ovos.common_query.ping` | `OvosCommonQueryPingMessage` |
 | `ovos.common_query.pong` | `OvosCommonQueryPongMessage` |
+
+---
+[← Audio](audio.md) · [Home](index.md) · [Intent pipeline →](intent-pipeline.md)

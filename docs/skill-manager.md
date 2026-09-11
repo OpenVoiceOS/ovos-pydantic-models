@@ -10,6 +10,9 @@ Messages related to skill lifecycle management, settings, runtime installation, 
 | `mycroft.skills.is_ready` | `MycroftSkillsIsReadyMessage` | Query whether the skills service is ready |
 | `mycroft.skills.is_ready.response` | `MycroftSkillsIsReadyResponseMessage` | Reply: `status: bool` |
 | `mycroft.skills.ready` | `MycroftSkillsReadyMessage` | Skills service has finished loading |
+
+| Message type | Class | Description |
+|---|---|---|
 | `mycroft.skills.initialized` | `MycroftSkillsInitializedMessage` | Skills service initialized (before training) |
 | `mycroft.skills.error` | `MycroftSkillsErrorMessage` | Skills failed to load completely |
 
@@ -54,7 +57,7 @@ error = MycroftSkillsErrorMessage(
 | `skillmanager.list` | `SkillManagerListMessage` | Request list of all loaded skills |
 | `mycroft.skills.list` | `MycroftSkillsListMessage` | Reply: dict keyed by skill_id |
 
-**`MycroftSkillsListData`** — open model, keys are skill IDs, values are dicts:
+**`MycroftSkillsListData`**: open model, keys are skill IDs, values are dicts:
 
 ```python
 # example data payload
@@ -74,6 +77,9 @@ error = MycroftSkillsErrorMessage(
 | `mycroft.skills.deactivate` | `MycroftSkillsDeactivateMessage` | `skill_id` |
 | `skillmanager.activate` | `SkillManagerActivateMessage` | `skill` (ID or `"all"`) |
 | `skillmanager.activate.response` | `SkillManagerActivateResponseMessage` | optional error data |
+
+| Message type | Class | Key field |
+|---|---|---|
 | `skillmanager.deactivate` | `SkillManagerDeactivateMessage` | `skill` |
 | `skillmanager.deactivate.response` | `SkillManagerDeactivateResponseMessage` | optional error data |
 | `skillmanager.keep` | `SkillManagerKeepMessage` | `skill` (keep this, deactivate all others) |
@@ -160,10 +166,13 @@ from ovos_pydantic_models.core.skill_installer import (
 | Message type | Class | Key field |
 |---|---|---|
 | `ovos.skills.install` | `OvosSkillsInstallMessage` | `url: str` (GitHub URL) |
-| `ovos.skills.install.complete` | `OvosSkillsInstallCompleteMessage` | — |
+| `ovos.skills.install.complete` | `OvosSkillsInstallCompleteMessage` | n/a |
 | `ovos.skills.install.failed` | `OvosSkillsInstallFailedMessage` | `error: InstallError` |
 | `ovos.skills.uninstall` | `OvosSkillsUninstallMessage` | `skill_id \| package_name` |
-| `ovos.skills.uninstall.complete` | `OvosSkillsUninstallCompleteMessage` | — |
+
+| Message type | Class | Key field |
+|---|---|---|
+| `ovos.skills.uninstall.complete` | `OvosSkillsUninstallCompleteMessage` | n/a |
 | `ovos.skills.uninstall.failed` | `OvosSkillsUninstallFailedMessage` | `error: InstallError \| str` |
 
 ### Pip Install / Uninstall
@@ -171,10 +180,13 @@ from ovos_pydantic_models.core.skill_installer import (
 | Message type | Class | Key field |
 |---|---|---|
 | `ovos.pip.install` | `OvosPipInstallMessage` | `packages: list[str]` |
-| `ovos.pip.install.complete` | `OvosPipInstallCompleteMessage` | — |
+| `ovos.pip.install.complete` | `OvosPipInstallCompleteMessage` | n/a |
 | `ovos.pip.install.failed` | `OvosPipInstallFailedMessage` | `error: InstallError` |
 | `ovos.pip.uninstall` | `OvosPipUninstallMessage` | `packages: list[str]` |
-| `ovos.pip.uninstall.complete` | `OvosPipUninstallCompleteMessage` | — |
+
+| Message type | Class | Key field |
+|---|---|---|
+| `ovos.pip.uninstall.complete` | `OvosPipUninstallCompleteMessage` | n/a |
 | `ovos.pip.uninstall.failed` | `OvosPipUninstallFailedMessage` | `error: InstallError` |
 
 ```python
@@ -201,7 +213,7 @@ from ovos_pydantic_models.core.session import (
 | `ovos.session.sync` | `OvosSessionSyncMessage` | Request the current default session |
 | `ovos.session.update_default` | `OvosSessionUpdateDefaultMessage` | Broadcast updated default session |
 
-`OvosSessionUpdateDefaultData` is a `Session` subclass — the full session model is the data payload.
+`OvosSessionUpdateDefaultData` is a `Session` subclass. The full session model is the data payload.
 
 ```python
 from ovos_pydantic_models.session import Session
@@ -212,3 +224,6 @@ msg = OvosSessionUpdateDefaultMessage(data=OvosSessionUpdateDefaultData(**sessio
 ```
 
 See [message-base.md](message-base.md) for the full `Session` field reference.
+
+---
+[← Intent pipeline](intent-pipeline.md) · [Home](index.md) · [Missing messages →](missing-messages.md)

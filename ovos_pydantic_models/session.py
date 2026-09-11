@@ -68,6 +68,18 @@ class IntentContextManager(BaseModel):
         return values
 
 
+class SessionHandler(BaseModel):
+    """A skill holding an activation slot, with the time it was granted."""
+    skill_id: str = Field(..., description="ID of the skill holding the slot.")
+    activated_at: float = Field(..., description="Unix timestamp of the activation.")
+
+
+class ResponseMode(BaseModel):
+    """The single skill awaiting a raw utterance, and when its hold lapses."""
+    skill_id: str = Field(..., description="ID of the skill awaiting the response.")
+    expires_at: float = Field(..., description="Unix timestamp after which the hold is void.")
+
+
 class Session(BaseModel):
     """
     Comprehensive model for an OpenVoiceOS conversational session.
@@ -87,16 +99,12 @@ class Session(BaseModel):
     context: IntentContextManager = Field(default_factory=IntentContextManager,
                                           description="Context manager for the session's conversational flow.")
     site_id: str = Field("unknown", description="Identifier for the physical location or device.")
-    pipeline: List[str] = Field(
-        default_factory=lambda: [
-            "stop_high", "converse", "padatious_high", "adapt_high",
-            "fallback_high", "stop_medium", "padatious_medium",
-            "adapt_medium", "adapt_low", "common_qa", "fallback_medium", "fallback_low"
-        ],
-        description="Ordered list of intent matching pipeline stages."
+    pipeline: Optional[List[str]] = Field(
+        None,
+        description="Ordered list of pipeline matcher references. Absent when the producer declared none."
     )
-    location_preferences: Dict[str, Any] = Field(default_factory=dict,
-                                                 description="User's location preferences.")
+    location: Dict[str, Any] = Field(default_factory=dict,
+                                     description="Location the session resolves place-dependent answers against.")
     system_unit: str = Field("metric", description="Preferred system of measurement ('metric' or 'imperial').")
     time_format: str = Field("full", description="Preferred time format ('full' or '12hour'/'24hour').")
     date_format: str = Field("DMY", description="Preferred date format ('DMY', 'MDY', 'YMD').")
@@ -108,6 +116,30 @@ class Session(BaseModel):
                                           description="List of skill IDs that are blacklisted for this session.")
     touch_time: int = Field(default_factory=lambda: int(time.time()),
                             description="Timestamp of the last interaction with the session.")
+    secondary_langs: Optional[List[str]] = Field(None, description="Additional BCP-47 tags the session also understands.")
+    output_lang: Optional[str] = Field(None, description="BCP-47 tag the response is rendered in.")
+    stt_lang: Optional[str] = Field(None, description="BCP-47 tag the transcriber reported for the current utterance.")
+    request_lang: Optional[str] = Field(None, description="BCP-47 tag the client requested for the current utterance.")
+    detected_lang: Optional[str] = Field(None, description="BCP-47 tag a detector inferred for the current utterance.")
+    intent_context: Optional[Dict[str, Any]] = Field(None, description="Conversational context entries keyed by context name.")
+    active_handlers: Optional[List[SessionHandler]] = Field(None, description="Skills holding an activation slot, most recent first.")
+    converse_handlers: Optional[List[SessionHandler]] = Field(None, description="Skills eligible for the converse poll.")
+    response_mode: Optional[ResponseMode] = Field(None, description="The skill awaiting a raw utterance, if any.")
+    fallback_handlers: Optional[List[str]] = Field(None, description="Skill IDs registered as fallback handlers.")
+    persona_id: Optional[str] = Field(None, description="Persona the session routes conversational queries to.")
+    blacklisted_pipelines: Optional[List[str]] = Field(None, description="Pipeline matcher references barred from this session.")
+    audio_transformers: Optional[List[str]] = Field(None, description="Audio transformer plugins active in this session.")
+    utterance_transformers: Optional[List[str]] = Field(None, description="Utterance transformer plugins active in this session.")
+    metadata_transformers: Optional[List[str]] = Field(None, description="Metadata transformer plugins active in this session.")
+    intent_transformers: Optional[List[str]] = Field(None, description="Intent transformer plugins active in this session.")
+    dialog_transformers: Optional[List[str]] = Field(None, description="Dialog transformer plugins active in this session.")
+    tts_transformers: Optional[List[str]] = Field(None, description="TTS transformer plugins active in this session.")
+    blacklisted_audio_transformers: Optional[List[str]] = Field(None, description="Audio transformers barred from this session.")
+    blacklisted_utterance_transformers: Optional[List[str]] = Field(None, description="Utterance transformers barred from this session.")
+    blacklisted_metadata_transformers: Optional[List[str]] = Field(None, description="Metadata transformers barred from this session.")
+    blacklisted_intent_transformers: Optional[List[str]] = Field(None, description="Intent transformers barred from this session.")
+    blacklisted_dialog_transformers: Optional[List[str]] = Field(None, description="Dialog transformers barred from this session.")
+    blacklisted_tts_transformers: Optional[List[str]] = Field(None, description="TTS transformers barred from this session.")
 
     # Custom validator to convert utterance_states strings to Enum on instantiation
     @model_validator(mode='before')

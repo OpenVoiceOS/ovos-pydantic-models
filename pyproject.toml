@@ -25,6 +25,9 @@ Repository = "https://github.com/OpenVoiceOS/ovos-pydantic-models"
 [project.optional-dependencies]
 dev = [
     "pytest",
+    "ovos-bus-client>=2.10.1a1",
+    "ovos-core>=3.2.0a1",
+    "ovos-utils>=0.13.9a1",
 ]
 
 [tool.setuptools]

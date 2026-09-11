@@ -2,7 +2,7 @@ Last Edit: Claude Sonnet 4.6 - 2026-03-08 - Motive: Added mandatory Last Edit he
 
 # ovos-pydantic-models Documentation
 
-> **Beta** — Message models are semi-automatically generated and under active review. Some subsystems are deprecated but documented here for historical reference. Do not treat this as a stable API contract.
+> **Beta**: Message models are semi-automatically generated and under active review. Some subsystems are deprecated but documented here for historical reference. Do not treat this as a stable API contract.
 
 Typed Pydantic v2 models for every message that flows over the OVOS MessageBus. This package is the machine-readable specification of the OVOS bus protocol.
 
@@ -10,11 +10,15 @@ Typed Pydantic v2 models for every message that flows over the OVOS MessageBus. 
 
 | Document | Description |
 |---|---|
+| [developer-guide.md](developer-guide.md) | How to use this library in skills, plugins, and tests |
 | [message-base.md](message-base.md) | `OpenVoiceOSMessage`, `MessageContext`, `Session` |
 | [listener.md](listener.md) | Recognizer loop, wake word, mic control, OPM queries |
 | [audio.md](audio.md) | TTS speak, audio queue, legacy audio service, OPM queries |
-| [ocp.md](ocp.md) | OCP/Common Play — query protocol, playback control, media data models, enums |
-| [intent-pipeline.md](intent-pipeline.md) | Converse, fallback, stop, context management; Adapt and Padatious (legacy) |
+| [ocp.md](ocp.md) | OCP/Common Play: query protocol, playback control, media data models, enums |
+
+| Document | Description |
+|---|---|
+| [intent-pipeline.md](intent-pipeline.md) | Converse, fallback, stop, context management, Adapt and Padatious (legacy) |
 | [skill-manager.md](skill-manager.md) | Skill lifecycle, settings, installer, session sync |
 | [missing-messages.md](missing-messages.md) | Tracking doc: modeled vs still missing |
 
@@ -22,24 +26,24 @@ Typed Pydantic v2 models for every message that flows over the OVOS MessageBus. 
 
 | Badge | Meaning |
 |---|---|
-| ⚠ **deprecated** | Backing plugin/package archived on GitHub — documented for reference only |
-| β **beta** | Actively developed, not yet officially released — messages may change |
-| ↩ **legacy** | Functional but superseded by a better alternative |
+| **deprecated** | Backing plugin/package archived on GitHub. Documented for reference only. |
+| **beta** | Actively developed, not yet officially released. Messages may change. |
+| **legacy** | Functional but superseded by a better alternative |
 
 ### Deprecated
-- `phal.configuration_provider` — ovos-PHAL-plugin-configuration-provider archived
-- `phal.wifi_setup` — ovos-PHAL-plugin-wifi-setup archived
-- `gui.homescreen`, `gui.widgets`, `gui.media_player`, `gui.notifications` — superseded by GUI rewrite
+- `phal.configuration_provider`: ovos-PHAL-plugin-configuration-provider archived
+- `phal.wifi_setup`: ovos-PHAL-plugin-wifi-setup archived
+- `gui.homescreen`, `gui.widgets`, `gui.media_player`, `gui.notifications`: superseded by GUI rewrite
 
 ### Beta
-- `gui.namespace` — GUI protocol is unstable during the ongoing rewrite
-- `audio.video_service`, `audio.web_service` — ovos-media not yet officially launched
+- `gui.namespace`: GUI protocol is unstable during the ongoing rewrite
+- `audio.video_service`, `audio.web_service`: ovos-media not yet officially launched
 
 ### Legacy
-- `audio.audioservice` — being superseded by OCP (ovos-media) for media playback
-- `intents.adapt` — superseded by Padacioso / ML-based pipeline plugins
-- `intents.padatious` — superseded by Padacioso / ML-based pipeline plugins
-- `intents.core` context messages (`add_context`, `remove_context`, `clear_context`) — Adapt-specific
+- `audio.audioservice`: being superseded by OCP (ovos-media) for media playback
+- `intents.adapt`: superseded by Padacioso / ML-based pipeline plugins
+- `intents.padatious`: superseded by Padacioso / ML-based pipeline plugins
+- `intents.core` context messages (`add_context`, `remove_context`, `clear_context`): Adapt-specific
 
 ## Quick Start
 

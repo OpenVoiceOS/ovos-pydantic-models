@@ -13,7 +13,7 @@ class RegisterVocabData(BaseModel):
     entity_type: Optional[str] = Field(None, description="Tag/type name for this entity (e.g. 'WeatherKeyword').")
     alias_of: Optional[str] = Field(None, description="Another entity type this keyword is an alias of.")
     regex: Optional[str] = Field(None, description="Named-group regex to register as an entity (overrides entity_value/type).")
-    lang: str = Field(..., description="BCP-47 language code for this vocabulary entry.")
+    lang: Optional[str] = Field(None, description="BCP-47 language code for this vocabulary entry; absent means the system language.")
 
 
 class RegisterVocabMessage(OpenVoiceOSMessage):
@@ -40,6 +40,8 @@ class RegisterIntentData(BaseModel):
     at_least_one: List[Any] = Field(default_factory=list, description="List of entity groups where at least one must match.")
     optional: List[Any] = Field(default_factory=list, description="List of (entity_type, attribute) tuples that are optional.")
     excludes: List[Any] = Field(default_factory=list, description="List of entity types that must NOT be present.")
+    requires_context: Optional[List[Any]] = Field(None, description="Context gates that must be satisfied for this intent to match.")
+    excludes_context: Optional[List[Any]] = Field(None, description="Context gates that, if satisfied, block this intent.")
 
 
 class RegisterIntentMessage(OpenVoiceOSMessage):

@@ -376,3 +376,35 @@ class RecognizerLoopRecognitionUnknownMessage(OpenVoiceOSMessage):
 
 
 # --- Example Usage ---
+
+
+class RecognizerLoopStateMessage(OpenVoiceOSMessage):
+    """Broadcast listener FSM state change.
+
+    Emitted by ovos-dinkum-listener when the recognizer state machine
+    transitions (e.g. sleeping → listening → awaiting → processing).
+    Consumers include GUI overlays and bus monitors.
+    """
+    message_type: str = "recognizer_loop:state"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class MicIsMutedResponseMessage(OpenVoiceOSMessage):
+    """Reply confirming the current mic mute state.
+
+    Emitted in response to a ``mycroft.mic.is_muted`` query. Carries
+    ``muted`` (bool).
+    """
+    message_type: str = "mycroft.mic.is_muted.response"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class MycroftSpeechRecognitionUnknownMessage(OpenVoiceOSMessage):
+    """Indicate that the STT engine could not produce a usable transcription.
+
+    Emitted by the classic listener (mycroft-classic-listener) when the
+    STT result is empty or below confidence threshold. Equivalent to
+    ``recognizer_loop:recognition_unknown`` in the dinkum listener.
+    """
+    message_type: str = "mycroft.speech.recognition.unknown"
+    data: Dict[str, Any] = Field(default_factory=dict)

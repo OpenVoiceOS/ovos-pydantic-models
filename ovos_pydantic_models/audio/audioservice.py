@@ -411,3 +411,34 @@ class OvosAudioServiceListBackendsMessage(OpenVoiceOSMessage):
     """
     message_type: str = "ovos.audio.service.list_backends"
     data: Dict[str, Any] = Field(default_factory=dict)
+
+
+# --- OVOS-namespace audio service events (PIPELINE-1 §9.6 / STOP-1 §5.3) ---
+
+class OvosAudioPlayingTrackMessage(OpenVoiceOSMessage):
+    """Emitted by ovos-audio when a new track starts in the OVOS audio namespace.
+
+    OVOS-namespace counterpart to ``mycroft.audio.playing_track``.
+    """
+    message_type: str = "ovos.audio.playing_track"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosAudioQueueEndMessage(OpenVoiceOSMessage):
+    """Emitted by ovos-audio when the entire track queue finishes.
+
+    OVOS-namespace counterpart to ``mycroft.audio.queue_end``.
+    """
+    message_type: str = "ovos.audio.queue_end"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OvosStopMessage(OpenVoiceOSMessage):
+    """Request all OVOS subsystems to stop their current activity.
+
+    OVOS-namespace stop broadcast (STOP-1 §5.3). ovos-audio halts both TTS
+    and playback; other services that subscribe to ``mycroft.stop`` also
+    listen here when ``legacy_namespace`` is disabled.
+    """
+    message_type: str = "ovos.stop"
+    data: Dict[str, Any] = Field(default_factory=dict)

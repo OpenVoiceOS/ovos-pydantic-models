@@ -24,7 +24,10 @@ class OpenVoiceOSMessage(BaseModel):
     Base model for all OpenVoiceOS bus messages.
     All specific message types should inherit from or conform to this structure.
     """
-    message_type: str = Field(..., description="The type of the message (e.g., 'speak', 'recognizer_loop:utterance').")
+    model_config = ConfigDict(populate_by_name=True)
+
+    message_type: str = Field(..., alias="type",
+                              description="The type of the message (e.g., 'speak', 'recognizer_loop:utterance').")
     data: MessageData = Field(default_factory=dict, description="The payload data of the message.")
     context: MessageContext = Field(default_factory=MessageContext,
                                     description="Contextual information about the message.")

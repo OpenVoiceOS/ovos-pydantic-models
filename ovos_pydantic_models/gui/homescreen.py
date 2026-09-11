@@ -334,3 +334,100 @@ class OvosHomescreenMainViewCurrentIndexSetMessage(OpenVoiceOSMessage):
     """
     message_type: str = "ovos.homescreen.main_view.current_index.set"
     data: OvosHomescreenMainViewCurrentIndexSetData
+
+
+# --- Legacy homescreen data widgets (ovos-legacy-mycroft-gui-plugin) ---
+
+class HomescreenDataAppsMessage(OpenVoiceOSMessage):
+    """Push the installed-applications list to the homescreen widget.
+
+    Emitted by the legacy homescreen integration when the app list changes.
+    Carries ``applications_model`` — a list of app metadata dicts.
+    """
+    message_type: str = "homescreen.data.apps"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class HomescreenDataConnectivityMessage(OpenVoiceOSMessage):
+    """Push connectivity status to the homescreen widget.
+
+    Carries ``system_connectivity`` (bool or status string).
+    """
+    message_type: str = "homescreen.data.connectivity"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class HomescreenDataExamplesMessage(OpenVoiceOSMessage):
+    """Push skill-examples data to the homescreen suggestion widget.
+
+    Carries ``skill_examples`` (list), ``skill_info_enabled`` (bool),
+    ``skill_info_prefix`` (str).
+    """
+    message_type: str = "homescreen.data.examples"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class HomescreenDataNotificationsMessage(OpenVoiceOSMessage):
+    """Push notification counters/model to the homescreen notification badge.
+
+    Carries ``notification_counter`` (int) and ``notification_model`` (list).
+    """
+    message_type: str = "homescreen.data.notifications"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class HomescreenDataTimeMessage(OpenVoiceOSMessage):
+    """Push formatted time/date strings to the homescreen clock widget.
+
+    Carries ``time_string``, ``date_string``, ``weekday_string``,
+    ``day_string``, ``month_string``, ``year_string``.
+    """
+    message_type: str = "homescreen.data.time"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class HomescreenDataWallpaperMessage(OpenVoiceOSMessage):
+    """Push the current wallpaper path to the homescreen background widget.
+
+    Carries ``wallpaper_path`` and ``selected_wallpaper``.
+    """
+    message_type: str = "homescreen.data.wallpaper"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class HomescreenDataWeatherMessage(OpenVoiceOSMessage):
+    """Push weather data to the homescreen weather widget.
+
+    Carries ``weather_code`` (int icon code), ``weather_temp`` (str),
+    ``weather_api_enabled`` (bool).
+    """
+    message_type: str = "homescreen.data.weather"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class HomescreenWidgetAlarmMessage(OpenVoiceOSMessage):
+    """Push the next alarm time to the homescreen alarm widget."""
+    message_type: str = "homescreen.widget.alarm"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class HomescreenWidgetMediaMessage(OpenVoiceOSMessage):
+    """Push current media playback metadata to the homescreen media widget."""
+    message_type: str = "homescreen.widget.media"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class HomescreenWidgetTimerMessage(OpenVoiceOSMessage):
+    """Push active timer state to the homescreen timer widget."""
+    message_type: str = "homescreen.widget.timer"
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class MycroftGuiPortMessage(OpenVoiceOSMessage):
+    """Advertise the GUI WebSocket port to connecting clients.
+
+    Emitted by ovos-gui on startup so that skill-side GUI helpers know
+    which port to open a GUI WebSocket connection on.
+    """
+    message_type: str = "mycroft.gui.port"
+    data: Dict[str, Any] = Field(default_factory=dict)
