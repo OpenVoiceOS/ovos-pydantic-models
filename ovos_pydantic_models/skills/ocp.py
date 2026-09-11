@@ -1,6 +1,6 @@
 from typing import Dict, Any, List, Optional, Union
 from enum import Enum
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 
 from ovos_pydantic_models.message import OpenVoiceOSMessage, MessageContext
 from ovos_pydantic_models.session import Session
@@ -599,15 +599,23 @@ class OvosCommonPlayPreviousMessage(OpenVoiceOSMessage):
 
 
 class OvosCommonPlaySeekData(BaseModel):
-    """Absolute seek target for the OCP player."""
-    position: int = Field(..., description="Seek position in milliseconds.")
+    """Seek target for the OCP player, as an absolute position or a relative offset."""
+    seekValue: Optional[float] = Field(None, description="Absolute position to seek to, in milliseconds. Takes precedence over `seconds` when both are present.")
+    seconds: Optional[float] = Field(None, description="Signed offset from the current position, in seconds. Negative values seek backward.")
+
+    @model_validator(mode='after')
+    def check_seek_value_or_seconds(self):
+        if self.seekValue is None and self.seconds is None:
+            raise ValueError("Either 'seekValue' or 'seconds' must be provided.")
+        return self
 
 
 class OvosCommonPlaySeekMessage(OpenVoiceOSMessage):
-    """Seek the OCP player to an absolute position in the current track.
+    """Seek the OCP player to an absolute position, or by a relative offset, in the current track.
 
     Emitted by skills implementing voice-controlled seek ('jump to two
-    minutes in'). OCP forwards the seek to the active backend.
+    minutes in') and by `OCPInterface.seek_forward`/`seek_backward`. OCP
+    forwards the seek to the active backend.
     """
     message_type: str = "ovos.common_play.seek"
     data: OvosCommonPlaySeekData
