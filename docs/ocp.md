@@ -277,7 +277,7 @@ Global OCP player commands:
 | Message type | Class | Key data |
 |---|---|---|
 | `ovos.common_play.play_pause` | `OvosCommonPlayPlayPauseMessage` | n/a |
-| `ovos.common_play.seek` | `OvosCommonPlaySeekMessage` | `position: int` (ms) |
+| `ovos.common_play.seek` | `OvosCommonPlaySeekMessage` | `seekValue: float` (absolute, ms) or `seconds: float` (signed offset) |
 | `ovos.common_play.set_track_position` | `OvosCommonPlaySetTrackPositionMessage` | `position: int` |
 | `ovos.common_play.get_track_position` | `OvosCommonPlayGetTrackPositionMessage` | n/a |
 
