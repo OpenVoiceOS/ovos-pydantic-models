@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.2a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.3.2a1) (2026-09-11)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.3.1a1...0.3.2a1)
+
+**Merged pull requests:**
+
+- fix: match OvosCommonPlaySeekData to the real ovos.common\_play.seek wire shape [\#42](https://github.com/OpenVoiceOS/ovos-pydantic-models/pull/42) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.3.1a1](https://github.com/OpenVoiceOS/ovos-pydantic-models/tree/0.3.1a1) (2026-09-02)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-pydantic-models/compare/0.3.0a1...0.3.1a1)
