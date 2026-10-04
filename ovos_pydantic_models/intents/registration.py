@@ -1,8 +1,9 @@
 """OVOS-INTENT-4 registration wire.
 
 The six broadcasts a skill uses to publish and retract its intents and
-entities (§§5-8), the two enable/disable controls (§8.5), and the
-orchestrator's introspection pull-queries (§10).
+entities (§§5-8), the two enable/disable controls (§8.5), the skill's
+capability announcement (§8.6), and the orchestrator's introspection
+pull-queries (§10).
 
 Every registration is keyed by the ``session_id`` the consumer reads from
 ``context.session.session_id`` (§11.1), never from the payload. On the query
@@ -186,6 +187,24 @@ class OvosSkillDeregisterMessage(OpenVoiceOSMessage):
     data: OvosSkillDeregisterData
 
 
+class OvosSkillLoadedData(BaseModel):
+    """Skill identity and declared capabilities (INTENT-4 §8.6)."""
+    skill_id: str = Field(..., description="Skill that finished loading.")
+    capabilities: List[str] = Field(default_factory=list, description="Declared capabilities: fallback, common_query, converse. Consumers ignore unknown names.")
+    model_config = ConfigDict(extra='allow')
+
+
+class OvosSkillLoadedMessage(OpenVoiceOSMessage):
+    """Announce a loaded skill and its capabilities — OVOS-INTENT-4 §8.6.
+
+    Emitted by the skill loader after a skill loads, and again when the skill
+    reports ready, so a manifest rebuilt after a core restart recovers it. A
+    re-announcement replaces the entry for that session and skill.
+    """
+    message_type: str = "ovos.skill.loaded"
+    data: OvosSkillLoadedData
+
+
 class OvosIntentListData(BaseModel):
     """Optional filters for an intent listing (INTENT-4 §10.1).
 
@@ -231,6 +250,40 @@ class OvosIntentListResponseMessage(OpenVoiceOSMessage):
     """Return the registered intents — OVOS-INTENT-4 §10.1."""
     message_type: str = "ovos.intent.list.response"
     data: OvosIntentListResponseData
+
+
+class OvosSkillsListData(BaseModel):
+    """Optional session filter for a skill listing (INTENT-4 §10.3)."""
+    session_id: Optional[str] = Field(None, description="Return default-session skills plus this session's. Omitted means every session.")
+    model_config = ConfigDict(extra='allow')
+
+
+class OvosSkillsListMessage(OpenVoiceOSMessage):
+    """Ask the orchestrator which skills have announced themselves — OVOS-INTENT-4 §10.3."""
+    message_type: str = "ovos.skills.list"
+    data: OvosSkillsListData = Field(default_factory=OvosSkillsListData)
+
+
+class SkillManifestEntry(BaseModel):
+    """One announced skill as the manifest reports it (INTENT-4 §10.3)."""
+    skill_id: str = Field(..., description="Announced skill.")
+    session_id: str = Field(..., description="Session the skill was announced under.")
+    capabilities: List[str] = Field(default_factory=list, description="Known capabilities from the skill's ovos.skill.loaded announcement.")
+    intents: int = Field(..., description="Number of intents the skill has registered in that session.")
+    model_config = ConfigDict(extra='allow')
+
+
+class OvosSkillsListResponseData(BaseModel):
+    """Announced skills (INTENT-4 §10.3)."""
+    ok: bool = Field(..., description="True when the query was served.")
+    skills: List[SkillManifestEntry] = Field(default_factory=list, description="Matching skills, default session first.")
+    model_config = ConfigDict(extra='allow')
+
+
+class OvosSkillsListResponseMessage(OpenVoiceOSMessage):
+    """Return the announced skills — OVOS-INTENT-4 §10.3."""
+    message_type: str = "ovos.skills.list.response"
+    data: OvosSkillsListResponseData
 
 
 class OvosIntentDescribeData(BaseModel):

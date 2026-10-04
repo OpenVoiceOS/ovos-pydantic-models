@@ -28,3 +28,25 @@ class RecognizerLoopAudioOutputEndMessage(OpenVoiceOSMessage):
     """
     message_type: str = "recognizer_loop:audio_output_end"
     data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for audio output end event.")
+
+
+class OvosAudioOutputStartedMessage(OpenVoiceOSMessage):
+    """Signal that an audio output playback session has started — OVOS-AUDIO-1 §5.1.
+
+    Emitted by `ovos-audio` when playback goes from idle to active, derived by
+    `forward` from the speak Message so it keeps that Message's context. The
+    spec name of `recognizer_loop:audio_output_start`.
+    """
+    message_type: str = "ovos.audio.output.started"
+    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for audio output start event.")
+
+
+class OvosAudioOutputEndedMessage(OpenVoiceOSMessage):
+    """Signal that an audio output playback session has ended — OVOS-AUDIO-1 §5.2.
+
+    Emitted by `ovos-audio` when the queue is empty and the last item has
+    finished, derived by `forward` from the speak Message. The spec name of
+    `recognizer_loop:audio_output_end`.
+    """
+    message_type: str = "ovos.audio.output.ended"
+    data: Dict[str, Any] = Field(default_factory=dict, description="Empty data payload for audio output end event.")

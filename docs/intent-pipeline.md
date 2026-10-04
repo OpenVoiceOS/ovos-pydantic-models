@@ -277,6 +277,7 @@ from ovos_pydantic_models.intents.stop import (
 | `mycroft.audio.speech.stop` | `MycroftAudioSpeechStopMessage` | `skill_id \| None` |
 | `{skill_id}.stop.ping` | `SkillStopPingMessage` | `skill_id` |
 | `skill.stop.pong` | `SkillStopPongMessage` | `skill_id`, `can_handle: bool` |
+| `ovos.stop.pong` | `OvosStopPongMessage` | `skill_id`, `can_handle: bool` (required) |
 | `{skill_id}.stop` | `SkillStopRequestMessage` | n/a |
 
 | Message type | Class | Key fields |

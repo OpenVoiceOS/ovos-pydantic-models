@@ -80,6 +80,24 @@ class SkillStopPongMessage(OpenVoiceOSMessage):
     data: SkillStopPongData
 
 
+class OvosStopPongData(BaseModel):
+    """A skill's answer to the `ovos.stop.ping` broadcast (OVOS-STOP-1 §4.2)."""
+    skill_id: str = Field(..., description="Skill ID responding to the ping.")
+    can_handle: bool = Field(..., description="True if this skill has something active to stop right now. A missing value is not stoppable.")
+    model_config = ConfigDict(extra='allow')
+
+
+class OvosStopPongMessage(OpenVoiceOSMessage):
+    """A skill reports whether it has something to stop — OVOS-STOP-1 §4.2.
+
+    Emitted by every skill in reply to `ovos.stop.ping`, derived by `reply`.
+    The stop service sends a targeted `{skill_id}.stop` to the active skills
+    that answer with `can_handle` true. The spec name of `skill.stop.pong`.
+    """
+    message_type: str = "ovos.stop.pong"
+    data: OvosStopPongData
+
+
 class SkillStopRequestMessage(OpenVoiceOSMessage):
     """Command a specific skill to stop its current action.
 

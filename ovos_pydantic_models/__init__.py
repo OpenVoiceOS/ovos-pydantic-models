@@ -51,6 +51,8 @@ from ovos_pydantic_models.audio.opm import (
 from ovos_pydantic_models.audio.recognizer_loop import (
     RecognizerLoopAudioOutputStartMessage,
     RecognizerLoopAudioOutputEndMessage,
+    OvosAudioOutputStartedMessage,
+    OvosAudioOutputEndedMessage,
 )
 
 # Listener — speech recognition
@@ -107,8 +109,11 @@ from ovos_pydantic_models.intents.registration import (
     OvosIntentEnableMessage, OvosIntentDisableMessage,
     OvosEntityDeregisterData, OvosEntityDeregisterMessage,
     OvosSkillDeregisterData, OvosSkillDeregisterMessage,
+    OvosSkillLoadedData, OvosSkillLoadedMessage,
     OvosIntentListData, OvosIntentListMessage,
     IntentManifestEntry, OvosIntentListResponseData, OvosIntentListResponseMessage,
+    OvosSkillsListData, OvosSkillsListMessage,
+    SkillManifestEntry, OvosSkillsListResponseData, OvosSkillsListResponseMessage,
     OvosIntentDescribeData, OvosIntentDescribeMessage,
     IntentDefinitionEntry, OvosIntentDescribeResponseData, OvosIntentDescribeResponseMessage,
 )
@@ -170,6 +175,7 @@ from ovos_pydantic_models.intents.stop import (
     MycroftStopMessage,
     SkillStopPingData, SkillStopPingMessage,
     SkillStopPongData, SkillStopPongMessage,
+    OvosStopPongData, OvosStopPongMessage,
     SkillStopRequestMessage,
     SkillStopResponseData, SkillStopResponseMessage,
     MycroftSkillsAbortQuestionData, MycroftSkillsAbortQuestionMessage,
