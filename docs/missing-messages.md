@@ -17,14 +17,11 @@ Run `python tools/scan_for_messages.py --unmodeled-only` to verify coverage.
 |---|---|---|
 | `ovos.mpv.*` | `ovos.mpv.timeout_check` | Internal MPV plugin state, not a bus API |
 | `ocp:*` | `ocp:play`, `ocp:pause`, `ocp:next`, `ocp:legacy_cps`, etc. | ML classifier output **labels** (model categories inside ocp-pipeline-plugin), not actual bus message types |
-| `ovos.ggwave.*` / `ggwave.*` | `ovos.ggwave.enable/disable/enabled/disabled`, `ggwave.enabled/disabled` | Plugin-specific, single-skill private API |
-| Skill-specific private APIs | `ovos.alerts.*`, `ovos.gui.show.active.*`, `ovos.display.screenshot.*`, `async.chatgpt.fallback`, `hello.world` | Private APIs used only within a single skill, not reusable protocol |
+| Skill-specific private APIs | `async.chatgpt.fallback`, `hello.world` | Private APIs used only within a single skill, not reusable protocol |
 
 | Category | Message type(s) | Reason |
 |---|---|---|
 | Skill-specific dynamic types | `skill-laugh.openvoiceos.home`, `skill-ovos-weather.openvoiceos.*`, `*.openvoiceos.*` | Skill-ID-embedded dynamic types, skill-private |
-| `mycroft.skill.loaded` (singular) | n/a | Test-only string. Production code uses `mycroft.skills.loaded` (plural, modeled) |
-| `mycroft.schedule.update_event` | n/a | Typo in ovos-bus-client for `mycroft.scheduler.update_event` (modeled) |
 
 ---
 [← Skill manager](skill-manager.md) · [Home](index.md)
